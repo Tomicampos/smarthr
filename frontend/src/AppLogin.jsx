@@ -15,7 +15,7 @@ export default function AppLogin() {
     try {
       const { data } = await axios.post('http://localhost:3001/login', { email, password });
       localStorage.setItem('smarthr_token', data.token);
-      navigate('/dashboard');
+      navigate('/home');
     } catch (err) {
       setMensaje('Error: ' + (err.response?.data?.message || err.message));
     }

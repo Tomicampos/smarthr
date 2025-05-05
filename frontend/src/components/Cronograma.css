@@ -1,0 +1,91 @@
+/* Cronograma.css */
+
+.cronograma-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  
+  .cronograma-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .cronograma-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #111827;
+  }
+  
+  .dot {
+    color: #ef4444;
+    font-size: 1.5rem;
+    vertical-align: middle;
+    margin-left: 0.25rem;
+  }
+  
+  .view-more {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    padding: 0.3rem 0.75rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .view-more svg {
+    margin-left: 0.25rem;
+  }
+  
+  .cronograma-section + .cronograma-section {
+    margin-top: 1.5rem;
+  }
+  
+  .section-date {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
+    text-transform: capitalize;
+  }
+  
+  .event-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  
+  .event-time {
+    width: 3.5rem;
+    font-size: 0.9rem;
+    color: #374151;
+  }
+  
+  .event-bar {
+    width: 4px;
+    height: 2.5rem;
+    background: #ef4444; /* por defecto, cambia según color con Tailwind si quieres */
+    margin: 0 0.75rem;
+    border-radius: 4px;
+  }
+  
+  .event-content {
+    flex: 1;
+  }
+  
+  .event-title {
+    font-size: 0.95rem;
+    color: #111827;
+    font-weight: 500;
+  }
+  
+  .event-desc {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+  

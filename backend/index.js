@@ -71,6 +71,19 @@ app.get('/api/protected', (req, res) => {
 });
 // ————————————————————————————————————————
 
+  // backend/index.js, tras tus rutas existentes
+app.get('/api/notifications', (req, res) => {
+  // Idealmente vendrían de la base de datos; aquí mockeamos:
+  res.json([
+    { id: 1, text: 'Entrevista con postulantes diseño UX/UI', time: '07:30 AM', read: false },
+    { id: 2, text: '[Recordatorio] Cargar nuevos empleados al sistema', time: 'Ayer, 06:00 PM', read: false },
+    { id: 3, text: 'Se encuentran cargados todos los recibos de sueldo', time: 'Martes 17/09 17:55 PM', read: true },
+    { id: 4, text: 'El área de soporte solicitó una capacitación en SQL', time: 'Jueves 13/09 17:55 PM', read: true },
+    { id: 5, text: 'El día está soleado.', time: 'Lunes 10/09 17:55 PM', read: true },
+  ]);
+});
+
+
 app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
 });

@@ -1,0 +1,70 @@
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    padding: 0.75rem 2rem;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  .header-left, .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .search-box {
+    display: flex;
+    align-items: center;
+    background: #f3f4f6;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+  }
+  
+  .search-box .icon {
+    margin-right: 0.5rem;
+    color: #6b7280;
+  }
+  
+  .search-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 200px;
+    font-size: 0.9rem;
+  }
+  
+  .datetime {
+    font-size: 0.9rem;
+    color: #374151;
+  }
+  
+  .bell-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
+  .bell-btn:hover {
+    background: #d64040;
+    border: 15px;
+    cursor: pointer;
+    
+  }
+  
+  .bell-btn .icon {
+    font-size: 1.2rem;
+    color: #374151;
+  }
+  
+  .header-greeting {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1rem;
+    color: #111827;
+  }
+  
