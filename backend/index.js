@@ -1,6 +1,21 @@
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
 const pool = require('./db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Middlewares
+app.use(cors());
+app.use(express.json());
+
+// Ruta para probar backend
+app.get('/', (req, res) => {
+  res.send('Backend funcionando correctamente.');
+});
 
 // Ruta para login
 app.post('/login', async (req, res) => {
@@ -35,4 +50,9 @@ app.post('/login', async (req, res) => {
     console.error(error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
+});
+
+// Levantar el servidor
+app.listen(PORT, () => {
+  console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
 });
