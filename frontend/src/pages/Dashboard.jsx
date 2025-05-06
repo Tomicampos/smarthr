@@ -5,26 +5,44 @@ import ProgresoPostulantes from '../components/ProgresoPostulantes';
 import Cronograma from '../components/Cronograma';
 
 export default function Dashboard() {
-  // 1. Cambiar el título de la pestaña
   useEffect(() => {
-    document.title = 'Inicio';
+    document.title = 'Inicio • SmartHR';
   }, []);
 
   return (
-    <>
-      {/* 2. Contenedor de dos columnas */}
-      <div style={{ display: 'flex', gap: '1.5rem', height: '100%' }}>
-        {/* Columna izquierda (75%) */}
-        <div style={{ flex: 3, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <NotificationsPreview />
+    <div
+      style={{
+        display: 'flex',
+        gap: '1.5rem',
+        height: '100%', 
+        flex: 1,                 // <— ocupe todo el main
+      }}
+    >
+      {/* Columna izquierda */}
+      <div style={{
+        flex: 3,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1.5rem',
+        height: '100%',
+      }}>
+        <NotificationsPreview />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <ProgresoPostulantes />
         </div>
+      </div>
 
-        {/* Columna derecha (25%) */}
+      {/* Columna derecha */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+      }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <Cronograma />
         </div>
       </div>
-    </>
+    </div>
   );
 }

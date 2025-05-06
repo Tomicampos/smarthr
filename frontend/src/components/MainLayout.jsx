@@ -24,9 +24,18 @@ export default function MainLayout() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
         <Header />
-        <main style={{ flex: 1, padding: '2rem', background: '#f9fafb' }}>
+        <main
+         style={{
+           flex: 1,
+           display: 'flex',         /* <— aquí */
+           flexDirection: 'column', /* <— y aquí */
+           height: '100%',           
+           padding: '2rem',
+           background: '#f9fafb'
+         }}
+       >
           <Outlet />
         </main>
       </div>

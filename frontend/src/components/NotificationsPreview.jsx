@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api from '../api';
+import api from '../api';            // ← tu instancia
 import './NotificationsPreview.css';
 import { FiChevronRight } from 'react-icons/fi';
 
@@ -7,7 +7,7 @@ export default function NotificationsPreview() {
   const [notifs, setNotifs] = useState([]);
 
   useEffect(() => {
-    api.get('/api/notifications')
+    api.get('/notifications')
        .then(res => {
          console.log('NOTIFS:', res.data);
          setNotifs(res.data);

@@ -1,0 +1,50 @@
+
+.cal-container {
+    /* Ajustes generales del calendario */
+    margin-top: -1rem;            /* para subirlo un poco */
+    padding: 0;                   /* remover padding extra */
+    border-radius: 1rem;          /* contenedor con bordes redondeados */
+    overflow: hidden;
+  }
+  
+  /* FullCalendar: contenedor principal */
+  .cal-container .fc {
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+  
+  /* Botones de navegación y vistas */
+  .cal-container .fc .fc-button {
+    background-color: #e53e3e;
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    margin: 0 0.25rem;
+  }
+  .cal-container .fc .fc-button:not(:disabled):hover {
+    background-color: #c53030;
+  }
+  .cal-container .fc .fc-button-active {
+    background-color: #9b2c2c;
+  }
+  
+  /* Cabecera (título del mes) */
+  .cal-container .fc .fc-toolbar-title {
+    color: #9b2c2c;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  
+  /* Celdas horarias: permitir scroll vertical hasta el final */
+  .cal-container .fc-timegrid-body {
+    max-height: calc(100vh - 250px) !important;  /* ajusta según tu layout */
+    overflow-y: auto !important;
+  }
+  
+  /* Opcional: color de los eventos */
+  .cal-container .fc-event {
+    background-color: #f56565 !important;
+    border-color: #c53030 !important;
+  }
+  

@@ -1,0 +1,13 @@
+.agenda-card {
+    background: #fff; border-radius: 8px; padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    height: 100%; display: flex; flex-direction: column;
+  }
+  .agenda-card h3 { margin: 0 0 1rem; }
+  .agenda-list { list-style:none; margin:0; padding:0; flex:1; overflow-y:auto; }
+  .agenda-item { display:flex; margin-bottom:0.75rem; }
+  .agenda-time { width:3.5rem; font-size:0.9rem; color:#374151; }
+  .agenda-content { flex:1; }
+  .agenda-title { font-weight:500; color:#111827; }
+  .agenda-desc { font-size:0.8rem; color:#6b7280; }
+  
