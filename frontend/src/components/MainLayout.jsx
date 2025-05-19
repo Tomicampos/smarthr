@@ -17,26 +17,41 @@ export default function MainLayout() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Si la ruta está en nuestro map, la usamos; si no, fallback
     document.title = titles[pathname] || 'SmartHR';
   }, [pathname]);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', height: '100vh' }}>
       <Sidebar />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+
+        {/* Header se queda fijo */}
         <Header />
+
+        {/* Contenedor principal sin padding */}
         <main
-         style={{
-           flex: 1,
-           display: 'flex',         /* <— aquí */
-           flexDirection: 'column', /* <— y aquí */
-           height: '100%',           
-           padding: '2rem',
-           background: '#f9fafb'
-         }}
-       >
-          <Outlet />
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            // Elimina padding para pegarte al borde
+            padding: 0,
+            // Fundido de fondo
+            background: '#f9fafb',
+            // Oculta el overflow del contenedor y deja que el hijo lo maneje
+            overflow: 'hidden',
+          }}
+        >
+          {/* Este div introduce el scroll interno */}
+          <div
+            style={{
+              flex: 1,
+              // Aquí tus páginas (Calendario, Empleados, etc.) harán scroll
+              overflowY: 'auto',
+            }}
+          >
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

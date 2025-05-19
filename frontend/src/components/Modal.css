@@ -1,0 +1,169 @@
+/* src/components/Modal.css */
+
+/* 1) Fondo gris semi-transparente */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 1000;
+  }
+  
+  /* 2) Caja blanca centrada */
+  .modal-container {
+    background: #ffffff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 480px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* 3) Header */
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb; /* gris claro */
+  }
+  
+  .modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #111827; /* gris muy oscuro */
+    font-weight: 600;
+    margin-top: 1rem;
+  }
+  
+  .modal-close {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: #dc2626; /* rojo de la paleta */
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  .modal-close:hover {
+    color: #b91c1c;
+  }
+  
+  /* 4) Body */
+  .modal-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  /* 5) Formularios: inputs, selects, textareas */
+  .modal-body label {
+    font-size: 0.875rem;
+    color: #4b5563; /* gris medio */
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+
+  
+  .modal-body input,
+  .modal-body select,
+  .modal-body textarea {
+    width: 100%;
+    background: #f9fafb;            /* gris muy claro */
+    border: 1px solid #d1d5db;      /* gris claro */
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    color: #111827;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease;
+    margin-bottom: 0.50rem;
+  }
+  
+  .modal-body input:focus,
+  .modal-body select:focus,
+  .modal-body textarea:focus {
+    outline: none;
+    border-color: #dc2626;           /* rojo vivo */
+  }
+  
+  /* 6) Botón principal */
+  .modal-body .btn-primary {
+    align-self: flex-end;
+    background: #dc2626;             /* rojo */
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  
+  .modal-body .btn-primary:hover {
+    background: #b91c1c;
+  }
+  
+  /* 7) Para forzar centrado vertical cuando el contenido es pequeño */
+  .modal-container {
+    margin: 1rem; /* deja espacio en móviles */
+  }
+  
+/* 5) Formularios: inputs, selects, textareas */
+.modal-body input,
+.modal-body select,
+.modal-body textarea {
+  /*  Añadimos box-sizing para incluir padding en el tamaño total */
+  box-sizing: border-box;
+
+  /*  Aumentamos un poco la altura mínima */
+  min-height: 2.5rem;
+
+  width: 100%;
+  background: #f9fafb;            /* gris muy claro */
+  border: 1px solid #d1d5db;      /* gris claro */
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  color: #111827;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease;
+}
+
+/* … (resto idéntico) … */
+
+/* 6) Botón principal */
+.modal-body .btn-primary {
+  box-sizing: border-box;
+  align-self: flex-end;
+  background: #dc2626;             /* rojo */
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+    margin-top: 1rem;
+}
+
+/* Si lo quieres full width (opcional) */
+/*
+.modal-body .btn-primary {
+  width: 100%;
+  text-align: center;
+}
+*/
+
+.modal-body .btn-primary:hover {
+  background: #b91c1c;
+}
+
