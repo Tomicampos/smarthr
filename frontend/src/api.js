@@ -1,16 +1,16 @@
 // src/api.js
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: 'http://localhost:3001/api'
+const API = axios.create({
+  baseURL: 'http://localhost:3001/api'  // ← Todas las llamadas protegidas irán a http://localhost:3001/api/...
 });
 
-
-
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('smarthr_token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+API.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
-export default api;
+export default API;

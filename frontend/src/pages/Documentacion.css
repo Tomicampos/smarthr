@@ -1,0 +1,144 @@
+/* Documentacion.css */
+
+/* ──────────────────────────────────────────────────────────────── */
+/* Contenedor general */
+.doc-container {
+  padding: 2rem;
+  background: #f9fafb;
+  min-height: 100%;
+}
+
+/* ALERTA flotante superior derecha */
+.alert {
+  position: fixed;
+  top: 5rem;           /* Ajusta este valor para desplazar verticalmente */
+  right: 1rem;
+  display: flex;
+  align-items: start;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+  max-width: 320px;
+  background: white;
+}
+
+/* Icono dentro de alerta */
+.alert-icon {
+  margin-right: 0.75rem;
+}
+.alert-icon .icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  stroke-width: 2;
+}
+
+/* Contenido de la alerta */
+.alert-content {
+  flex: 1;
+}
+.alert-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+.alert-message {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+/* Bordes según tipo */
+.alert-success {
+  border-left: 4px solid #10b981; /* verde */
+}
+.alert-error {
+  border-left: 4px solid #ef4444; /* rojo  */
+}
+
+/* ──────────────────────────────────────────────────────────────── */
+/* Título */
+.doc-title {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+/* ──────────────────────────────────────────────────────────────── */
+/* Tabla de empleados */
+
+/* wrapper que envuelve la tabla */
+.doc-table-wrapper {
+  overflow-x: auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* tabla */
+.doc-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.doc-table th,
+.doc-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+}
+.doc-table thead {
+  background: #fff1f1;
+}
+.doc-table th {
+  color: #b91c1c;
+  font-weight: 600;
+}
+.doc-table tbody tr:nth-child(even) {
+  background: #ffffff;
+}
+.doc-table tbody tr:nth-child(odd) {
+  background: #fbfbfb;
+}
+.doc-table tbody tr:hover {
+  background: #f2f2f2;
+}
+.no-data {
+  text-align: center;
+  color: #666;
+  padding: 1rem;
+}
+
+/* ──────────────────────────────────────────────────────────────── */
+/* Botones */
+.btn-red {
+  background: #dc2626;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-red:hover {
+  background: #b91c1c;
+}
+.btn-outline-red {
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-outline-red:hover {
+  background: #dc2626;
+  color: white;
+}
+
+/* ──────────────────────────────────────────────────────────────── */
+/* NO SECCION DE “Recibos Masivos” – esto queda en otro archivo si existe */
+
+/* (No agregamos estilos de recibos aquí, sólo para empleados) */

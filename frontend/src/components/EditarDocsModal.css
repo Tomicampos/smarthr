@@ -1,0 +1,115 @@
+/* EditarDocsModal.css */
+
+/* Overlay semitransparente */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+  }
+  
+  /* Contenedor del modal */
+  .modal-container {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  /* Cabecera del modal */
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #dc2626;
+    color: white;
+    padding: 1rem;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+  .modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+  .close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: white;
+    cursor: pointer;
+  }
+  
+  /* Cuerpo del modal */
+  .modal-body {
+    padding: 1.25rem;
+  }
+  
+  /* Formulario de subida */
+  .upload-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .upload-form input[type="file"] {
+    flex: 1;
+    border: 1px solid #ccc;
+    padding: 0.4rem;
+    border-radius: 4px;
+  }
+  .upload-form .btn-red {
+    padding: 0.5rem 1rem;
+  }
+  
+  /* Lista de documentos dentro del modal */
+  .doc-list-wrapper {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .doc-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+  }
+  .doc-list-table th,
+  .doc-list-table td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #eee;
+  }
+  .doc-list-table thead {
+    background: #ffe5e5;
+  }
+  .doc-list-table th {
+    color: #b91c1c;
+    font-weight: 600;
+  }
+  .doc-list-table tbody tr:hover {
+    background: #f9f9f9;
+  }
+  
+  /* Pie del modal */
+  .modal-footer {
+    padding: 0.75rem;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid #ddd;
+    background: #f5f5f5;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
+  
+  /* Animación de aparición */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  

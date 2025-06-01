@@ -1,9 +1,10 @@
-// src/components/Calendario.jsx
+// src/pages/Calendario.jsx
 import React, { useState, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import esLocale from "@fullcalendar/core/locales/es";
+import API from "../api";
 import "./Calendario.css";
 
 import {
@@ -12,8 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "./ui/dialog";
-import { Button } from "./ui/button";
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export default function Calendario() {
   const [events, setEvents] = useState([]);
@@ -21,22 +22,12 @@ export default function Calendario() {
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/agenda")  // <— asegúrate de que coincida con tu ruta real
-      .then((res) => res.json())
-      .then((data) => {
-        // DEBUG: destripa la respuesta en consola
-        console.log("RAW EVENTS:", data);
-        setEvents(
-          data.map((e) => ({
-            title: e.summary || "(Sin título)",
-            // si es evento de todo el día:
-            start: e.start.dateTime || e.start.date,
-            end:   e.end.dateTime   || e.end.date,
-            allDay: !!e.start.date && !e.start.dateTime,
-          }))
-        );
-      })
-      .catch((err) => console.error("Error cargando agenda:", err));
+    API.get("/agenda")
+      .then((res) => setEvents(Array.isArray(res.data) ? res.data : []))
+      .catch((err) => {
+        console.error("Error cargando agenda:", err);
+        setEvents([]);
+      });
   }, []);
 
   const handleDateClick = (arg) => {
@@ -60,10 +51,10 @@ export default function Calendario() {
         height="auto"
         scrollTime="00:00"
       />
-
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button style={{ display: "none" }}>Abrir</Button>
+          {/* Este botón nunca aparece, sólo dispara el dialog internamente */}
+          <Button className="hidden">Abrir</Button>
         </DialogTrigger>
         <DialogContent className="max-w-md">
           <DialogHeader>

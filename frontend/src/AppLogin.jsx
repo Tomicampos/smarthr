@@ -1,60 +1,58 @@
 // src/AppLogin.jsx
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import './App.css';
+import axios from 'axios';        // ← Usaremos axios “a secas” para el login
+import './App.css';               // ← Asegúrate de tener este archivo App.css en src/
 
 export default function AppLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [mensaje, setMensaje] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      const { data } = await axios.post('http://localhost:3001/login', { email, password });
-      localStorage.setItem('smarthr_token', data.token);
+      // Llamamos directamente a http://localhost:3001/login (sin /api)
+      const { data } = await axios.post('http://localhost:3001/login', {
+        email,
+        password
+      });
+      // Guardamos el token en localStorage
+      localStorage.setItem('token', data.token);
+      // Redirigimos a /home (u otra ruta protegida)
       navigate('/home');
     } catch (err) {
-      setMensaje('Error: ' + (err.response?.data?.message || err.message));
+      console.error('Error en login:', err);
+      alert('Usuario o contraseña incorrectos');
     }
   };
 
   return (
     <div className="login-container">
-      <div className="login-card">
-        <img src="/emser.png" alt="Emser Logo" />
-        <h2>Inicia Sesión en tu cuenta</h2>
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="email">Correo Electrónico</label>
+      <h2>Iniciar Sesión</h2>
+      <form onSubmit={handleSubmit} className="login-form">
+        <div className="form-group">
+          <label>Email:</label>
           <input
-            className="login-input"
-            id="email"
             type="email"
-            placeholder="Correo Electrónico"
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
+            className="input-field"
           />
-          <label htmlFor="password">Contraseña</label>
+        </div>
+        <div className="form-group">
+          <label>Contraseña:</label>
           <input
-            className="login-input"
-            id="password"
             type="password"
-            placeholder="Contraseña"
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
+            className="input-field"
           />
-          <button type="submit" className="btn">Iniciar Sesión</button>
-        </form>
-        {mensaje && (
-          <p className={mensaje.startsWith('Error') ? 'error' : 'success'}>
-            {mensaje}
-          </p>
-        )}
-      </div>
+        </div>
+        <button type="submit" className="btn-login">Ingresar</button>
+      </form>
     </div>
   );
 }

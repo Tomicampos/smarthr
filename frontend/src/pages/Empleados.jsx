@@ -1,34 +1,31 @@
-// src/pages/Empleados.jsx
 import React, { useState, useEffect, useRef } from "react";
+import API from "../api";
 import EmpleadoForm from "../components/EmpleadoForm.jsx";
 import Modal from "../components/Modal.jsx";
 import "./Empleados.css";
 
 export default function Empleados() {
   const [users, setUsers] = useState([]);
-  const [mode, setMode] = useState(null);           // 'create'|'view'|'edit'
+  const [mode, setMode] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [notification, setNotification] = useState(null);
   const fileInputRef = useRef();
+  const [notification, setNotification] = useState(null);
 
-  // Función centralizada para cargar usuarios
+  useEffect(() => {
+    cargarUsuarios();
+  }, []);
+
   const cargarUsuarios = async () => {
     try {
-      const res = await fetch("http://localhost:3001/api/users");
-      const data = await res.json();
-      setUsers(Array.isArray(data) ? data : data.data || []);
+      const { data } = await API.get("/users");
+      setUsers(data);
     } catch (err) {
-      console.error("Error cargando usuarios:", err);
+      console.error(err);
       setNotification({ type: "error", text: "No se pudieron cargar los usuarios." });
       setTimeout(() => setNotification(null), 5000);
     }
   };
-
-  // Carga inicial
-  useEffect(() => {
-    cargarUsuarios();
-  }, []);
 
   const openForm = (modo, user = null) => {
     setMode(modo);
@@ -45,53 +42,61 @@ export default function Empleados() {
     cargarUsuarios();
   };
 
-  // Export CSV
-  const handleExport = () => {
-    window.location.href = "http://localhost:3001/api/users/export";
-  };
-
-  // Import CSV
-  const handleImportClick = () => fileInputRef.current.click();
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("file", file);
-
+  // Exportar CSV (con token en headers)
+  const handleExport = async () => {
     try {
-      const res = await fetch("http://localhost:3001/api/users/import", {
-        method: "POST",
-        body: formData,
+      const response = await API.get('/users/export', {
+        responseType: 'blob'
       });
-      const result = await res.json();
-
-      // Mostrar notificación bonita
-      const { inserted = [], errors = [] } = result;
-      const isError = errors.length > 0;
-      setNotification({
-        type: isError ? "error" : "success",
-        text: `Insertados: ${inserted.length}. Errores: ${errors.length}.`,
-      });
-      setTimeout(() => setNotification(null), 5000);
-
-      cargarUsuarios();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'usuarios.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Error importando:", err);
-      setNotification({ type: "error", text: "Error al importar CSV." });
+      console.error('Error exportando CSV:', err);
+      setNotification({ type: 'error', text: 'Error al exportar CSV' });
       setTimeout(() => setNotification(null), 5000);
     }
   };
 
-  // Título dinámico del modal
+  const handleImportClick = () => fileInputRef.current.click();
+
+  const handleFileChange = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const { data: result } = await API.post("/users/import", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      setNotification({
+        type: result.errors.length ? "error" : "success",
+        text: result.errors.length
+          ? `Errores: ${result.errors.length}`
+          : `Importados: ${result.inserted.length}`
+      });
+      setTimeout(() => setNotification(null), 5000);
+      cargarUsuarios();
+    } catch (err) {
+      console.error("Error importando:", err);
+      setNotification({ type: "error", text: "Error al importar CSV" });
+      setTimeout(() => setNotification(null), 5000);
+    }
+  };
+
   const modalTitle = {
     create: "Crear empleado",
     view:   "Ver empleado",
-    edit:   "Editar empleado",
+    edit:   "Editar empleado"
   }[mode];
 
   return (
     <>
-      {/* Banner de notificación */}
       {notification && (
         <div className={`emp-notif ${notification.type}`} role="alert">
           {notification.text}
@@ -133,10 +138,10 @@ export default function Empleados() {
               </tr>
             </thead>
             <tbody>
-              {users.map((u, i) => (
+              {users.map((u, idx) => (
                 <tr
                   key={u.id}
-                  className={i % 2 === 0 ? "emp-row-even" : "emp-row-odd"}
+                  className={idx % 2 === 0 ? "emp-row-even" : "emp-row-odd"}
                 >
                   <td>{u.id}</td>
                   <td>{u.nombre}</td>

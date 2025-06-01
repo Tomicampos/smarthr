@@ -1,113 +1,169 @@
 // src/components/EmpleadoForm.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import API from "../api";
+import "./Modal.css";
 
 export default function EmpleadoForm({ mode, user, onSuccess }) {
-  const isView = mode === 'view';
-  const [form, setForm] = useState({
-    id: '', nombre: '', email: '', password: '', rol: 'empleado'
-  });
+  /**
+   * mode: "create" | "view" | "edit"
+   * user: { id, nombre, email, rol }  // cuando es edit o view
+   * onSuccess: función que se llama cuando la operación (create/edit) fue exitosa
+   */
+  // Form state:
+  const [id, setId] = useState(user?.id || "");
+  const [nombre, setNombre] = useState(user?.nombre || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [password, setPassword] = useState("");
+  const [rol, setRol] = useState(user?.rol || "empleado");
+  const [errorMsg, setErrorMsg] = useState(null);
 
+  // Cuando el prop `user` cambia (por ejemplo al abrir el formulario en "edit"), actualizamos los campos:
   useEffect(() => {
     if (user) {
-      setForm({
-        id: String(user.id),
-        nombre: user.nombre || '',
-        email: user.email || '',
-        password: '',
-        rol: user.rol === 'Administrador' ? 'admin' : 'empleado'
-      });
+      setId(user.id);
+      setNombre(user.nombre);
+      setEmail(user.email);
+      setRol(user.rol);
     } else {
-      setForm({ id: '', nombre: '', email: '', password: '', rol: 'empleado' });
+      // Si volvemos a modo "create", limpiamos:
+      setId("");
+      setNombre("");
+      setEmail("");
+      setPassword("");
+      setRol("empleado");
     }
-  }, [user]);
+    setErrorMsg(null);
+  }, [user, mode]);
 
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
+  // Validación mínima:
+  const validarCampos = () => {
+    if (!nombre.trim()) {
+      setErrorMsg("El nombre es obligatorio.");
+      return false;
+    }
+    if (!email.trim()) {
+      setErrorMsg("El email es obligatorio.");
+      return false;
+    }
+    if (mode === "create" && !password.trim()) {
+      setErrorMsg("La contraseña es obligatoria.");
+      return false;
+    }
+    if (!["empleado", "admin"].includes(rol)) {
+      setErrorMsg("El rol no es válido.");
+      return false;
+    }
+    setErrorMsg(null);
+    return true;
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const base = 'http://localhost:3001/api/users';
-    const url = mode === 'create' ? base : `${base}/${form.id}`;
-    const method = mode === 'create' ? 'POST' : 'PUT';
-    const payload = {
-      id: Number(form.id),
-      nombre: form.nombre,
-      email: form.email,
-      rol: form.rol
-    };
-    if (mode === 'create') payload.password = form.password;
+    if (!validarCampos()) return;
 
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (res.ok) onSuccess();
-    else alert('Error al guardar');
+    try {
+      if (mode === "create") {
+        // Crear nuevo usuario
+        const payload = {
+          id: Number(id),       // convertir a número
+          nombre: nombre.trim(),
+          email: email.trim(),
+          password: password,
+          rol
+        };
+        await API.post("/users", payload);
+      } else if (mode === "edit") {
+        // Editar existente (no enviamos password ni id)
+        const payload = {
+          nombre: nombre.trim(),
+          email: email.trim(),
+          rol
+        };
+        await API.put(`/users/${id}`, payload);
+      }
+      onSuccess();
+    } catch (err) {
+      console.error("Error al guardar usuario:", err);
+      // Si el backend devolvió message
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Error desconocido al guardar.";
+      setErrorMsg(msg);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium">DNI</label>
-        <input
-          name="id" value={form.id}
-          onChange={handleChange}
-          disabled={isView}
-          required
-          className="mt-1 block w-full border rounded px-2 py-1"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium">Nombre</label>
-        <input
-          name="nombre" value={form.nombre}
-          onChange={handleChange}
-          disabled={isView} required
-          className="mt-1 block w-full border rounded px-2 py-1"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium">Email</label>
-        <input
-          name="email" type="email" value={form.email}
-          onChange={handleChange}
-          disabled={isView} required
-          className="mt-1 block w-full border rounded px-2 py-1"
-        />
-      </div>
-      {mode==='create' && (
-        <div>
-          <label className="block text-sm font-medium">Password</label>
+    <form className="form-emp" onSubmit={handleSubmit}>
+      {errorMsg && <div className="form-error">{errorMsg}</div>}
+
+      {/* ID sólo editable en modo "create" */}
+      {mode === "create" && (
+        <div className="form-group">
+          <label>ID:</label>
           <input
-            name="password" type="password" value={form.password}
-            onChange={handleChange} required
-            className="mt-1 block w-full border rounded px-2 py-1"
+            type="number"
+            value={id}
+            onChange={(e) => setId(e.target.value)}
+            required
           />
         </div>
       )}
-      <div>
-        <label className="block text-sm font-medium">Rol</label>
-        <select
-          name="rol" value={form.rol}
-          onChange={handleChange}
-          disabled={isView}
-          className="mt-1 block w-full border rounded px-2 py-1"
-        >
-          <option value="empleado">Usuario</option>
-          <option value="admin">Administrador</option>
-        </select>
+
+      <div className="form-group">
+        <label>Nombre:</label>
+        <input
+          type="text"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          readOnly={mode === "view"}
+          required
+        />
       </div>
-      {!isView && (
-        <button
-          type="submit" 
-          className="btn-primary"
-        >
-          {mode === 'edit' ? 'Actualizar' : 'Crear'}
-        </button>
+
+      <div className="form-group">
+        <label>Email:</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          readOnly={mode === "view"}
+          required
+        />
+      </div>
+
+      {/* En modo "create" pedimos contraseña */}
+      {mode === "create" && (
+        <div className="form-group">
+          <label>Contraseña:</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
       )}
+
+      <div className="form-group">
+        <label>Rol:</label>
+        {mode === "view" ? (
+          <input type="text" value={rol} readOnly />
+        ) : (
+          <select value={rol} onChange={(e) => setRol(e.target.value)}>
+            <option value="empleado">empleado</option>
+            <option value="admin">admin</option>
+          </select>
+        )}
+      </div>
+
+      <div className="form-buttons">
+        {mode !== "view" && (
+          <button type="submit" className="btn-submit">
+            {mode === "create" ? "Crear" : "Guardar"}
+          </button>
+        )}
+      </div>
     </form>
   );
 }

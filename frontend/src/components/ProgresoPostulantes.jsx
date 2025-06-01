@@ -7,7 +7,7 @@ import './ProgresoPostulantes.css';
 // Datos de ejemplo - reemplazar con llamado real
 const ejemploPostulantes = [
   { id: 1, nombre: 'Tomas Campos', puesto: 'Manager Developer', etapa: 'Entrevista al usuario', read: true },
-  { id: 2, nombre: 'Renzo Giraldo', puesto: 'Marketing', etapa: 'Entrevista de RRHH', read: true },
+  { id: 2, nombre: 'Renzito', puesto: 'Marketing', etapa: 'Entrevista de RRHH', read: true },
   { id: 3, nombre: 'Chilli Parker', puesto: 'Developer', etapa: 'En revisión', read: true },
   { id: 4, nombre: 'Homero Simpson', puesto: 'Devops', etapa: 'Cancelado', read: false },
   { id: 5, nombre: 'Duki', puesto: 'Mobile Dev', etapa: 'Entrevista al usuario', read: true }

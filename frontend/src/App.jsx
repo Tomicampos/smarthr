@@ -6,11 +6,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
 
 // Importa **UNA** vez cada componente de página
-import Dashboard from './pages/Dashboard';         // <-- aquí
+import Dashboard     from './pages/Dashboard';
 import Reclutamiento from './pages/Reclutamiento';
-import Empleados from './pages/Empleados';
+import Empleados     from './pages/Empleados';
 import Notificaciones from './pages/Notificaciones';
-import Agenda from './pages/Agenda';
+import Agenda        from './pages/Agenda';
 import Documentacion from './pages/Documentacion';
 
 export default function App() {
@@ -26,13 +26,12 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        {/* Usa Dashboard para /home */}
-        <Route path="home"          element={<Dashboard />} />
-        <Route path="reclutamiento" element={<Reclutamiento />} />
-        <Route path="empleados"     element={<Empleados />} />
-        <Route path="notificaciones"element={<Notificaciones />} />
-        <Route path="agenda"        element={<Agenda />} />
-        <Route path="documentacion" element={<Documentacion />} />
+        <Route path="home"           element={<Dashboard />} />
+        <Route path="reclutamiento"  element={<Reclutamiento />} />
+        <Route path="empleados"      element={<Empleados />} />
+        <Route path="notificaciones" element={<Notificaciones />} />
+        <Route path="agenda"         element={<Agenda />} />
+        <Route path="documentacion"  element={<Documentacion />} />
 
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Route>
