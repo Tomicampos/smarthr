@@ -17,6 +17,14 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const app        = express();
 const PORT       = process.env.PORT || 3001;
 
+// ── Ajuste: exponer Content-Disposition para que el frontend lo lea ──
+app.use(
+  cors({
+    exposedHeaders: ['Content-Disposition']
+  })
+);
+// ───────────────────────────────────────────────────────────────────
+app.use(express.json());
 // ── Multer (carpetas temporales) ───────────────────────────
 const uploadUsers       = multer({ dest: 'tmp_users/' });
 const uploadDocs        = multer({ dest: 'tmp_docs/' });
