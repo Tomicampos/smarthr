@@ -20,7 +20,7 @@
     background: #ffffff;
     border-radius: 12px;
     width: 90%;
-    max-width: 480px;
+    max-width: 600px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.1);
     overflow: hidden;
     display: flex;
@@ -39,7 +39,7 @@
   .modal-title {
     margin: 0;
     font-size: 1.25rem;
-    color: #111827; /* gris muy oscuro */
+    color: white; /* gris muy oscuro */
     font-weight: 600;
     margin-top: 1rem;
   }
@@ -48,7 +48,7 @@
     background: transparent;
     border: none;
     font-size: 1.5rem;
-    color: #dc2626; /* rojo de la paleta */
+    color: white; /* rojo de la paleta */
     cursor: pointer;
     transition: color 0.2s ease;
   }
@@ -141,19 +141,16 @@
 
 /* 6) Botón principal */
 .modal-body .btn-primary {
-  box-sizing: border-box;
-  align-self: flex-end;
-  background: #dc2626;             /* rojo */
-  color: #fff;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-    margin-top: 1rem;
-}
+    background: #dc2626;       /* mismo rojo */
+    color: white;              /* texto blanco */
+    padding: 0.5rem 1rem;      /* igual que .btn-red */
+    border-radius: 6px;        /* esquinas redondeadas */
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
 
 /* Si lo quieres full width (opcional) */
 /*

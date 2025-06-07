@@ -1,8 +1,15 @@
 // src/components/EditarDocsModal.jsx
 import React, { useState, useEffect } from 'react';
 import API from '../api';
-import './EditarDocsModal.css';
+import ModalGenérico from './ModalGenerico';     // ← ahora usamos el modal común
+import './EditarDocsModal.css'; // Solo estilos internos de la tabla, botones, etc.
 
+/**
+ * Props:
+ *  - empleado: { id, nombre, email }
+ *  - onClose: función para cerrar el modal
+ *  - mostrarNotificacion: (tipo, texto) => void
+ */
 export default function EditarDocsModal({ empleado, onClose, mostrarNotificacion }) {
   const [docs, setDocs] = useState([]);
   const [cargandoDocs, setCargandoDocs] = useState(true);
@@ -48,29 +55,26 @@ export default function EditarDocsModal({ empleado, onClose, mostrarNotificacion
     }
   }
 
-  const descargarDocumento = async (docId) => {
+  const descargarDocumento = async docId => {
     try {
       const res = await API.get(
         `/empleados/${empleado.id}/documentos/${docId}/download`,
-        { responseType: "blob" }
+        { responseType: 'blob' }
       );
-  
-      // Ahora sí podremos leer Content-Disposition
-      const disposition = res.headers["content-disposition"] || "";
+      const disposition = res.headers['content-disposition'] || '';
       const match = disposition.match(/filename="?(.+)"?/);
       const filename = match ? match[1] : `documento_${docId}`;
-  
       const url = window.URL.createObjectURL(res.data);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
-      link.setAttribute("download", filename);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Error descargando documento:", err);
-      mostrarNotificacion("error", "No se pudo descargar el documento.");
+      console.error('Error descargando documento:', err);
+      mostrarNotificacion('error', 'No se pudo descargar el documento.');
     }
   };
 
@@ -87,81 +91,64 @@ export default function EditarDocsModal({ empleado, onClose, mostrarNotificacion
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-container">
-        <div className="modal-header">
-          <h2>Documentos de {empleado.nombre}</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
-        </div>
+    <ModalGenérico abierto={true} onClose={onClose} título={`Documentos de ${empleado.nombre}`}>
+      {/* ─── Subir nuevo documento ────────────────────────────────── */}
+      <form onSubmit={handleUpload} className="upload-form">
+        <input
+          type="file"
+          accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          onChange={e => setFile(e.target.files[0])}
+        />
+        <button
+          type="submit"
+          className="btn-red"
+          disabled={subiendo || !file}
+        >
+          {subiendo ? 'Subiendo...' : 'Subir Archivo'}
+        </button>
+      </form>
 
-        <div className="modal-body">
-          <form onSubmit={handleUpload} className="upload-form">
-            <input
-              type="file"
-              accept="
-                application/pdf,
-                application/msword,
-                application/vnd.openxmlformats-officedocument.wordprocessingml.document
-              "
-              onChange={e => setFile(e.target.files[0])}
-            />
-            <button
-              type="submit"
-              className="btn-red"
-              disabled={subiendo || !file}
-            >
-              {subiendo ? 'Subiendo...' : 'Subir Archivo'}
-            </button>
-          </form>
-
-          <div className="doc-list-wrapper">
-            {cargandoDocs ? (
-              <p>Cargando documentos...</p>
-            ) : docs.length === 0 ? (
-              <p className="no-data">No hay documentos.</p>
-            ) : (
-              <table className="doc-list-table">
-                <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Fecha de Subida</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {docs.map(d => (
-                    <tr key={d.id}>
-                      <td>{d.file_name}</td>
-                      <td>{d.fecha_subida}</td>
-                      <td>
-                        <button
-                          className="btn-outline-red"
-                          onClick={() => descargarDocumento(d.id)}
-                        >
-                          Descargar
-                        </button>
-                        {' '}
-                        <button
-                          className="btn-outline-red"
-                          onClick={() => eliminarDocumento(d.id)}
-                        >
-                          Eliminar
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-
-        <div className="modal-footer">
-          <button className="btn-outline-red" onClick={onClose}>
-            Cerrar
-          </button>
-        </div>
+      {/* ─── Lista de documentos existentes ──────────────────────── */}
+      <div className="doc-list-wrapper">
+        {cargandoDocs ? (
+          <p>Cargando documentos...</p>
+        ) : docs.length === 0 ? (
+          <p className="no-data">No hay documentos.</p>
+        ) : (
+          <table className="doc-list-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Fecha de Subida</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {docs.map(d => (
+                <tr key={d.id}>
+                  <td>{d.file_name}</td>
+                  <td>{d.fecha_subida}</td>
+                  <td>
+                    <button
+                      className="btn-outline-red"
+                      onClick={() => descargarDocumento(d.id)}
+                    >
+                      Descargar
+                    </button>
+                    {' '}
+                    <button
+                      className="btn-outline-red"
+                      onClick={() => eliminarDocumento(d.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
-    </div>
+    </ModalGenérico>
   );
 }

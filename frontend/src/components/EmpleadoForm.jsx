@@ -1,7 +1,7 @@
 // src/components/EmpleadoForm.jsx
 import React, { useState, useEffect } from "react";
 import API from "../api";
-import "./Modal.css";
+import "./ModalGenerico.css";
 
 export default function EmpleadoForm({ mode, user, onSuccess }) {
   /**
@@ -151,8 +151,8 @@ export default function EmpleadoForm({ mode, user, onSuccess }) {
           <input type="text" value={rol} readOnly />
         ) : (
           <select value={rol} onChange={(e) => setRol(e.target.value)}>
-            <option value="empleado">empleado</option>
-            <option value="admin">admin</option>
+            <option value="empleado">Empleado</option>
+            <option value="admin">Administrador</option>
           </select>
         )}
       </div>

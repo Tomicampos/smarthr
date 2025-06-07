@@ -1,16 +1,17 @@
+// src/pages/Empleados.jsx
 import React, { useState, useEffect, useRef } from "react";
 import API from "../api";
 import EmpleadoForm from "../components/EmpleadoForm.jsx";
-import Modal from "../components/Modal.jsx";
+import ModalGenérico from "../components/ModalGenerico.jsx"; // Ya tienes este componente genérico
 import "./Empleados.css";
 
 export default function Empleados() {
   const [users, setUsers] = useState([]);
-  const [mode, setMode] = useState(null);
+  const [mode, setMode] = useState(null); // "create" | "edit" | "view"
   const [currentUser, setCurrentUser] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const fileInputRef = useRef();
   const [notification, setNotification] = useState(null);
+  const fileInputRef = useRef();
 
   useEffect(() => {
     cargarUsuarios();
@@ -22,7 +23,7 @@ export default function Empleados() {
       setUsers(data);
     } catch (err) {
       console.error(err);
-      setNotification({ type: "error", text: "No se pudieron cargar los usuarios." });
+      setNotification({ type: "error", text: "No se pudo cargar usuarios." });
       setTimeout(() => setNotification(null), 5000);
     }
   };
@@ -45,40 +46,41 @@ export default function Empleados() {
   // Exportar CSV (con token en headers)
   const handleExport = async () => {
     try {
-      const response = await API.get('/users/export', {
-        responseType: 'blob'
+      const response = await API.get("/users/export", {
+        responseType: "blob",
       });
+      // Crear URL blob y forzar descarga
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', 'usuarios.csv');
+      link.setAttribute("download", "usuarios.csv");
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Error exportando CSV:', err);
-      setNotification({ type: 'error', text: 'Error al exportar CSV' });
+      console.error("Error exportando CSV:", err);
+      setNotification({ type: "error", text: "Error al exportar CSV" });
       setTimeout(() => setNotification(null), 5000);
     }
   };
 
   const handleImportClick = () => fileInputRef.current.click();
 
-  const handleFileChange = async e => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const formData = new FormData();
     formData.append("file", file);
     try {
       const { data: result } = await API.post("/users/import", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: { "Content-Type": "multipart/form-data" },
       });
       setNotification({
         type: result.errors.length ? "error" : "success",
         text: result.errors.length
           ? `Errores: ${result.errors.length}`
-          : `Importados: ${result.inserted.length}`
+          : `Importados: ${result.inserted.length}`,
       });
       setTimeout(() => setNotification(null), 5000);
       cargarUsuarios();
@@ -91,8 +93,8 @@ export default function Empleados() {
 
   const modalTitle = {
     create: "Crear empleado",
-    view:   "Ver empleado",
-    edit:   "Editar empleado"
+    edit: "Editar empleado",
+    view: "Ver empleado",
   }[mode];
 
   return (
@@ -107,10 +109,14 @@ export default function Empleados() {
         <div className="emp-header">
           <h1 className="emp-title">Gestión de Empleados</h1>
           <div className="emp-actions">
+            {/* Aquí ya llamamos directamente a handleExport, sin comentarios vacíos */}
             <button className="emp-btn-export" onClick={handleExport}>
               📥 Exportar CSV
             </button>
-            <button className="emp-btn-import" onClick={handleImportClick}>
+            <button
+              className="emp-btn-import"
+              onClick={() => fileInputRef.current.click()}
+            >
               📤 Importar CSV
             </button>
             <button className="emp-btn-new" onClick={() => openForm("create")}>
@@ -168,9 +174,13 @@ export default function Empleados() {
         </div>
 
         {modalOpen && (
-          <Modal title={modalTitle} onClose={closeForm}>
-            <EmpleadoForm mode={mode} user={currentUser} onSuccess={onSaved} />
-          </Modal>
+          <ModalGenérico abierto={true} onClose={closeForm} título={modalTitle}>
+            <EmpleadoForm
+              mode={mode}
+              user={currentUser}
+              onSuccess={onSaved}
+            />
+          </ModalGenérico>
         )}
       </div>
     </>
