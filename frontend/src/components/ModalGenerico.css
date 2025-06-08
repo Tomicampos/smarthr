@@ -19,8 +19,9 @@
   .modal-container {
     background: #ffffff;
     border-radius: 12px;
-    width: 90%;
-    max-width: 600px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
     box-shadow: 0 4px 16px rgba(0,0,0,0.1);
     overflow: hidden;
     display: flex;
@@ -39,7 +40,7 @@
   .modal-title {
     margin: 0;
     font-size: 1.25rem;
-    color: white; /* gris muy oscuro */
+    color: black; 
     font-weight: 600;
     margin-top: 1rem;
   }
@@ -62,6 +63,7 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    overflow-y: auto;
   }
   
   /* 5) Formularios: inputs, selects, textareas */
@@ -164,3 +166,9 @@
   background: #b91c1c;
 }
 
+@media (max-width: 500px) {
+  .modal-container {
+    margin: 0 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+}

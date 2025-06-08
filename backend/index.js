@@ -1,4 +1,3 @@
-// index.js
 require('dotenv').config();
 const express        = require('express');
 const cors           = require('cors');
@@ -13,27 +12,24 @@ const { PDFDocument }= require('pdf-lib');
 const csvParser      = require('csv-parser');
 const fastCsv        = require('fast-csv');
 
+// ─── Crear app Y configurar body parsers ────────────────────────
+const app = express();
+const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
-const app        = express();
-const PORT       = process.env.PORT || 3001;
 
-// ── Ajuste: exponer Content-Disposition para que el frontend lo lea ──
-app.use(
-  cors({
-    exposedHeaders: ['Content-Disposition']
-  })
-);
-// ───────────────────────────────────────────────────────────────────
+// Exponer Content-Disposition para descargas y CORS
+app.use(cors({ exposedHeaders: ['Content-Disposition'] }));
 app.use(express.json());
-// ── Multer (carpetas temporales) ───────────────────────────
+app.use(express.urlencoded({ extended: true }));
+
+// Multer genérico y específicos
+const upload = multer();          // para multipart/form-data sin destino
 const uploadUsers       = multer({ dest: 'tmp_users/' });
 const uploadDocs        = multer({ dest: 'tmp_docs/' });
 const uploadEmpleadoDoc = multer({ dest: 'tmp_emp_docs/' });
+const uploadPost        = multer();
 
-app.use(cors());
-app.use(express.json());
-
-// ─── AUTH MIDDLEWARE ────────────────────────────────────────
+// ─── AUTH MIDDLEWARE ────────────────────────────────────────────
 function authMiddleware(req, res, next) {
   const auth  = req.headers.authorization || '';
   const token = auth.replace(/^Bearer\s+/i, '');
@@ -44,34 +40,17 @@ function authMiddleware(req, res, next) {
   });
 }
 
-// ─── RUTAS PÚBLICAS ──────────────────────────────────────────
-
-// Ruta de prueba
-app.get('/', (req, res) => {
-  res.send('Backend funcionando correctamente.');
-});
-
-// Login y generación de JWT
+// ─── RUTAS PÚBLICAS ────────────────────────────────────────────
+app.get('/', (req, res) => res.send('Backend funcionando correctamente.'));
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    const [rows] = await pool.query(
-      'SELECT * FROM users WHERE email = ?',
-      [email]
-    );
-    if (!rows.length) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
-    }
+    const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    if (!rows.length) return res.status(404).json({ message: 'Usuario no encontrado' });
     const u = rows[0];
     const ok = await bcrypt.compare(password, u.password);
-    if (!ok) {
-      return res.status(400).json({ message: 'Contraseña incorrecta' });
-    }
-    const token = jwt.sign(
-      { id: u.id, email: u.email, rol: u.rol },
-      JWT_SECRET,
-      { expiresIn: '2h' }
-    );
+    if (!ok) return res.status(400).json({ message: 'Contraseña incorrecta' });
+    const token = jwt.sign({ id: u.id, email: u.email, rol: u.rol }, JWT_SECRET, { expiresIn: '2h' });
     res.json({ token });
   } catch (err) {
     console.error('Error en /login:', err);
@@ -79,8 +58,9 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// ─── PROTEGEMOS TODO /api ─────────────────────────────────────
+// ─── PROTEGEMOS TODO /api ───────────────────────────────────────
 app.use('/api', authMiddleware);
+
 
 // ─── CRUD DE USUARIOS ──────────────────────────────────────────
 
@@ -202,6 +182,8 @@ app.post('/api/users/import', uploadUsers.single('file'), (req, res) => {
       res.status(500).json({ error: 'Error procesando CSV' });
     });
 });
+
+
 
 // ──────────────────────────────────────────────────────────────────────────
 // 1) RUTAS DE “RECIBOS MASIVOS”
@@ -496,6 +478,165 @@ app.delete('/api/empleados/:id/documentos/:docId', async (req, res) => {
   }
 });
 
+// ─── RUTAS DE RECLUTAMIENTO ──────────────────────────────────────
+const etapasDef = [
+  'Requerimiento recibido',
+  'Publicación de búsqueda',
+  'Recepción y filtrado de CVs',
+  'Entrevistas virtuales',
+  'Desafío técnico',
+  'Candidato seleccionado'
+];
+
+// 1) Listar procesos
+app.get('/api/reclutamiento', async (req, res) => {
+  const [rows] = await pool.query(
+    `SELECT r.*, u.nombre AS responsable
+       FROM reclutamiento r
+       JOIN users u ON u.id = r.creado_por
+      ORDER BY r.fecha_inicio DESC`
+  );
+  res.json(rows);
+});
+
+// 2) Crear proceso
+app.post('/api/reclutamiento', async (req, res) => {
+  const { codigo, puesto, area, tipo_busqueda } = req.body;
+  await pool.query(
+    `INSERT INTO reclutamiento (codigo, puesto, area, tipo_busqueda, creado_por)
+     VALUES (?,?,?,?,?)`,
+    [codigo, puesto, area, tipo_busqueda, req.user.id]
+  );
+  res.status(201).json({ ok: true });
+});
+
+// 3) Eliminar proceso + postulantes
+app.delete('/api/reclutamiento/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  await pool.query('DELETE FROM postulantes WHERE proceso_id = ?', [id]);
+  await pool.query('DELETE FROM reclutamiento WHERE id = ?', [id]);
+  res.status(204).end();
+});
+
+// 4) Avanzar etapa proceso
+app.post('/api/reclutamiento/:id/avanzar', async (req, res) => {
+  const id = Number(req.params.id);
+  const [[r]] = await pool.query('SELECT etapa_actual FROM reclutamiento WHERE id = ?', [id]);
+  if (!r) return res.status(404).end();
+  let nueva = r.etapa_actual + 1;
+  if (nueva > etapasDef.length) nueva = etapasDef.length;
+  const estado = (nueva === etapasDef.length) ? 'Finalizado' : 'En curso';
+  const fecha_fin_clause = (estado === 'Finalizado')
+    ? ', fecha_fin = COALESCE(fecha_fin, NOW())'
+    : '';
+  await pool.query(
+    `UPDATE reclutamiento
+       SET etapa_actual = ?, estado = ? ${fecha_fin_clause}
+     WHERE id = ?`,
+    [nueva, estado, id]
+  );
+  res.json({ ok: true });
+});
+
+// 5) Listar postulantes
+app.get('/api/reclutamiento/:id/postulantes', async (req, res) => {
+  const proc = Number(req.params.id);
+  const [rows] = await pool.query(
+    `SELECT * FROM postulantes WHERE proceso_id = ? ORDER BY fecha_creacion`,
+    [proc]
+  );
+  res.json(rows);
+});
+
+// 6) Crear postulante (multipart/form-data)
+app.post(
+  '/api/reclutamiento/:id/postulantes',
+  uploadPost.fields([{ name: 'cv' }, { name: 'docs' }]),
+  async (req, res) => {
+    try {
+      const proc = Number(req.params.id);
+      const { nombre, email, telefono, notas } = req.body;
+      await pool.query(
+        `INSERT INTO postulantes 
+           (proceso_id, nombre, email, telefono, notas) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [proc, nombre, email, telefono || null, notas || null]
+      );
+      // si quieres salvar archivos, usa req.files.cv y req.files.docs aquí
+      res.status(201).json({ ok: true });
+    } catch (err) {
+      console.error('Error al crear postulante:', err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// 7) Avanzar etapa postulante
+app.post(
+  '/api/reclutamiento/:pid/postulantes/:uid/avanzar',
+  async (req, res) => {
+    const { pid, uid } = req.params;
+    const [[p]] = await pool.query(
+      `SELECT etapa_actual FROM postulantes WHERE id=? AND proceso_id=?`,
+      [uid, pid]
+    );
+    if (!p) return res.status(404).end();
+    let nueva = p.etapa_actual + 1;
+    if (nueva > etapasDef.length) nueva = etapasDef.length;
+    await pool.query(
+      `UPDATE postulantes SET etapa_actual = ? WHERE id = ?`,
+      [nueva, uid]
+    );
+    res.json({ ok: true });
+  }
+);
+
+app.post(
+  '/api/reclutamiento/:id/postulantes',
+  uploadPost.single('cv'),
+  async (req, res) => {
+    const proc = +req.params.id;
+    const { nombre, email, telefono, notas } = req.body;
+    const cvBlob = req.file ? fs.readFileSync(req.file.path) : null;
+    const cvName = req.file ? req.file.originalname : null;
+    await pool.query(
+      `INSERT INTO postulantes
+        (proceso_id,nombre,email,telefono,notas,cv_blob,cv_filename)
+       VALUES (?,?,?,?,?,?,?)`,
+      [proc,nombre,email,telefono||null,notas||null,cvBlob,cvName]
+    );
+    if (req.file?.path) fs.unlinkSync(req.file.path);
+    res.status(201).end();
+  }
+);
+
+// 2) Para traer el detalle:
+app.get('/api/reclutamiento/:pid/postulantes/:uid', async (req, res) => {
+  const pid = +req.params.pid, uid = +req.params.uid;
+  const [[u]] = await pool.query(
+    `SELECT id, proceso_id, nombre, email, telefono, notas, cv_filename
+     FROM postulantes
+     WHERE id=? AND proceso_id=?`,
+    [uid,pid]
+  );
+  if (!u) return res.status(404).end();
+  res.json(u);
+});
+
+// 3) Para descargar el CV:
+app.get('/api/reclutamiento/:pid/postulantes/:uid/cv/download', async (req, res) => {
+  const pid = +req.params.pid, uid = +req.params.uid;
+  const [[u]] = await pool.query(
+    `SELECT cv_blob, cv_filename
+     FROM postulantes
+     WHERE id=? AND proceso_id=?`,
+    [uid,pid]
+  );
+  if (!u || !u.cv_blob) return res.status(404).end();
+  res.setHeader('Content-Type','application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${u.cv_filename}"`);
+  res.send(u.cv_blob);
+});
 // ─── NOTIFICACIONES (placeholder) ─────────────────────────────────
 app.get('/api/notifications', (req, res) => {
   res.json([]);
