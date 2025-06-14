@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Inter', sans-serif; color: #333; margin:0; padding:0; }
+    .header { background: transparent; padding: 1rem; text-align: center; }
+    .header img { height: 40px; }
+    .content { padding: 2rem; }
+    .content p { margin-bottom: 1rem; }
+    .footer { font-size: 0.8rem; color: #777; text-align: center; padding: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="cid:logo_empresa" alt="Logo SmartHR" />
+  </div>
+  <div class="content">
+    <p>Hola {{nombre}},</p>
+    {{{cuerpo}}}
+  </div>
+  <div class="footer">
+    © {{anio}} SmartHR. Todos los derechos reservados.
+  </div>
+</body>
+</html>

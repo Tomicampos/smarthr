@@ -5,43 +5,35 @@ import ProgresoPostulantes from '../components/ProgresoPostulantes';
 import Cronograma from '../components/Cronograma';
 
 export default function Dashboard() {
-  useEffect(() => {
-    document.title = 'Inicio • SmartHR';
-  }, []);
-
+ useEffect(() => {
+  document.title = 'Inicio • SmartHR';
+}, []);
   return (
     <div
       style={{
         display: 'flex',
-        gap: '1.5rem',
-        height: '100%', 
-        flex: 1,                 // <— ocupe todo el main
+        gap: '1.5rem',     // espacio entre columnas
+        height: '100%',
       }}
     >
       {/* Columna izquierda */}
       <div style={{
-        flex: 3,
+        flex: 3,            // ocupa 75%
         display: 'flex',
         flexDirection: 'column',
-        gap: '1.5rem',
-        height: '100%',
+        gap: '1.5rem',      // espacio vertical entre cards
       }}>
         <NotificationsPreview />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <ProgresoPostulantes />
-        </div>
+        <ProgresoPostulantes />
       </div>
 
       {/* Columna derecha */}
       <div style={{
-        flex: 1,
+        flex: 1,            // ocupa 25%
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
       }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <Cronograma />
-        </div>
+        <Cronograma />
       </div>
     </div>
   );

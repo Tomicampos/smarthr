@@ -9,12 +9,13 @@ import MainLayout from './components/MainLayout';
 import { ToastProvider } from './components/ToastContext';
 
 // Importa **UNA** vez cada componente de página
-import Dashboard      from './pages/Dashboard';
-import Reclutamiento  from './pages/Reclutamiento';
-import Empleados      from './pages/Empleados';
-import Notificaciones from './pages/Notificaciones';
-import Agenda         from './pages/Agenda';
-import Documentacion  from './pages/Documentacion';
+import Dashboard           from './pages/Dashboard';
+import Reclutamiento       from './pages/Reclutamiento';
+import Empleados           from './pages/Empleados';
+import Notificaciones      from './pages/Notificaciones';       // listado de notifs
+import NotificationDetail  from './pages/NotificationDetail';   // detalle individual
+import Agenda              from './pages/Agenda';
+import Documentacion       from './pages/Documentacion';
 
 export default function App() {
   return (
@@ -27,19 +28,23 @@ export default function App() {
         path="/"
         element={
           <ProtectedRoute>
-            {/* Envuelve con ToastProvider */}
             <ToastProvider>
               <MainLayout />
             </ToastProvider>
           </ProtectedRoute>
         }
       >
-        <Route path="home"           element={<Dashboard />} />
-        <Route path="reclutamiento"  element={<Reclutamiento />} />
-        <Route path="empleados"      element={<Empleados />} />
+        <Route path="home"          element={<Dashboard />} />
+        <Route path="reclutamiento" element={<Reclutamiento />} />
+        <Route path="empleados"     element={<Empleados />} />
+
+        {/* Listado de notificaciones */}
         <Route path="notificaciones" element={<Notificaciones />} />
-        <Route path="agenda"         element={<Agenda />} />
-        <Route path="documentacion"  element={<Documentacion />} />
+        {/* Detalle de una notificación concreta */}
+        <Route path="notificaciones/:id" element={<NotificationDetail />} />
+
+        <Route path="agenda"        element={<Agenda />} />
+        <Route path="documentacion" element={<Documentacion />} />
 
         {/* Redirige todo lo demás a /home */}
         <Route path="*" element={<Navigate to="/home" replace />} />

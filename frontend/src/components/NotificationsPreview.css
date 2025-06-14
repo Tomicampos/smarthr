@@ -1,75 +1,92 @@
+/* Card base */
 .notif-card {
-    background: #fff;
-    border-radius: 8px;
-    padding: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  .notif-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
-  }
-  
-  .notif-header h3 {
-    margin: 0;
-    font-size: 1.1rem;
-    color: #111827;
-  }
-  
-  .view-all {
-    background: none;
-    border: none;
-    color: #ef4444;
-    display: flex;
-    align-items: center;
-    font-size: 0.9rem;
-    cursor: pointer;
-  }
-  
-  .view-all svg {
-    margin-left: 0.25rem;
-  }
-  
-  .notif-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  
-  .notif-item {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f3f4f6;
-  }
-  
-  .notif-item:last-child {
-    border-bottom: none;
-  }
-  
-  .dot {
-    width: 8px;
-    height: 8px;
-    background: #ef4444;
-    border-radius: 50%;
-    margin-right: 0.75rem;
-    flex-shrink: 0;
-  }
-  
-  .notif-text {
-    flex: 1;
-    color: #374151;
-    font-size: 0.9rem;
-  }
-  
-  .notif-time {
-    color: #9ca3af;
-    font-size: 0.8rem;
-    margin-left: 1rem;
-    white-space: nowrap;
-  }
-  
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Header con título y botón */
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.notif-header h3 {
+  margin: 0;
+  font-size: 1.1rem;      /* mismo tamaño que ProgresoPostulantes */
+  font-weight: 400;       /* sin negrita */
+  color: #111827;
+}
+
+.view-all {
+  background: none;
+  border: none;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.view-all svg {
+  margin-left: 0.25rem;
+}
+
+.view-all:hover {
+  color: #dc2626;
+}
+
+/* Lista de notificaciones */
+.notif-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notif-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.notif-list li:last-child {
+  border-bottom: none;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #dc2626;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.status-dot.read {
+  opacity: 0.3;
+}
+
+.notif-text {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.notif-time {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-left: 1rem;
+}
+
+/* Placeholder si no hay items */
+.no-data {
+  text-align: center;
+  color: #777;
+  padding: 1rem 0;
+}

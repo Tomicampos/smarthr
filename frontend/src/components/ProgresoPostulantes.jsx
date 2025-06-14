@@ -56,7 +56,9 @@ export default function ProgresoPostulantes() {
     <div className="progreso-card">
       <div className="progreso-header">
         <h3>Progreso De Postulantes</h3>
-        <button className="view-all">
+        <button className="view-all"
+        onClick={() => window.location.href = '/reclutamiento'}
+        >
           Ver Todo <FiChevronRight />
         </button>
       </div>

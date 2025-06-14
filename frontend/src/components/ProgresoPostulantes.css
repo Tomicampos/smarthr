@@ -1,80 +1,115 @@
-/* ProgresoPostulantes.css */
+/* src/components/ProgresoPostulantes.css */
 
+/* Contenedor “card” */
 .progreso-card {
-    background: #fff;
-    border-radius: 8px;
+  background: #fff;
+  border-radius: 16px;               /* bordes más suaves */
+  padding: 1.5rem;                   /* espacio interior generoso */
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  width: 100%;                       /* ocupa todo el ancho de su columna */
+  max-width: 100%;                   
+  box-sizing: border-box;
+}
+
+/* Header con título y botón alineado a la derecha */
+.progreso-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.progreso-header h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.view-all {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* Separador horizontal muy tenue */
+.progreso-separator {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 0.5rem 0 1rem;
+}
+
+/* Hacemos la tabla scrollable en móvil */
+.progreso-table-wrapper {
+  overflow-x: auto;
+}
+
+/* Tabla sin márgenes, ocupa 100% */
+.progreso-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;  /* para distribuir columnas */
+}
+
+/* Encabezados ligeros, con menor contraste */
+.progreso-table th {
+  padding: 0.75rem 0.5rem;
+  font-size: 0.9rem;
+  color: #9ca3af;
+  font-weight: 500;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Celdas de contenido */
+.progreso-table td {
+  padding: 0.75rem 0.5rem;
+  font-size: 0.95rem;
+  color: #111827;
+  border-bottom: 1px solid #f3f4f6;
+  word-wrap: break-word;
+}
+
+/* Última fila sin borde inferior */
+.progreso-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Punto de estado y color según etapa */
+.status {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  background: #4f46e5; /* color genérico */
+}
+.status.blue {
+  background: #2563eb;
+}
+.status.canceled {
+  background: #ef4444;
+}
+
+/* Icono de “Ver” alineado a la derecha */
+.row-icon {
+  color: #9ca3af;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: right;
+}
+
+/* Responsivo: en pantallas pequeñas, la tabla cabe con scroll */
+@media (max-width: 768px) {
+  .progreso-card {
     padding: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    margin-top: 1.5rem;
-    
   }
-  
-  .progreso-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+  .progreso-table-wrapper {
+    overflow-x: auto;
   }
-  
-  .progreso-header h3 {
-    margin: 0;
-    font-size: 1.1rem;
-    color: #111827;
-  }
-  
-  .view-all {
-    background: none;
-    border: none;
-    color: #ef4444;
-    display: flex;
-    align-items: center;
-    font-size: 0.9rem;
-    cursor: pointer;
-  }
-  
-  .view-all svg {
-    margin-left: 0.25rem;
-  }
-  
-  .progreso-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  .progreso-table th,
-  .progreso-table td {
-    padding: 0.5rem;
-    text-align: left;
-    font-size: 0.9rem;
-    color: #374151;
-    border-bottom: 1px solid #f3f4f6;
-  }
-  
-  .progreso-table th {
-    color: #6b7280;
-    font-weight: 500;
-  }
-  
-  .status {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 0.5rem;
-    background: #4f46e5; /* azul por defecto para entrevistas */
-  }
-  
-  .status.blue {
-    background: #2563eb;
-  }
-  
-  .status.canceled {
-    background: #ef4444;
-  }
-  
-  .row-icon {
-    color: #9ca3af;
-    font-size: 1rem;
-    cursor: pointer;
-  }
-  
+}

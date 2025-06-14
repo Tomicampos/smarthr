@@ -1,0 +1,34 @@
+/* src/index.css */
+
+/* 1) Importar Inter desde Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap');
+
+:root {
+  /* Colores */
+  --bg: #f9fafb;
+  --card-bg: #ffffff;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --primary: #ef4444;
+  --border: #e5e7eb;
+  --shadow: rgba(0, 0, 0, 0.05);
+  --radius: 8px;
+  --gap: 1.5rem;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+    height: 100%;
+    font-family: 'Inter', sans-serif;
+    background: #f9fafb;
+  }
+
+button {
+  font-family: inherit;
+}
+

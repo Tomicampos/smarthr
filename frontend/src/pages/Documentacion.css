@@ -8,6 +8,26 @@
   min-height: 100%;
 }
 
+/* Tarjeta genérica */
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
+}
+
+/* Título de sección */
+.doc-section-title {
+  font-size: 1.5rem;
+  color: #b91c1c;
+  margin: 1.5rem 0 0.75rem;
+}
+
+/* Sobreescribe margin-bottom de la última card */
+.card:last-of-type {
+  margin-bottom: 0;
+}
 /* ALERTA flotante superior derecha */
 .alert {
   position: fixed;
@@ -138,7 +158,93 @@
   color: white;
 }
 
-/* ──────────────────────────────────────────────────────────────── */
-/* NO SECCION DE “Recibos Masivos” – esto queda en otro archivo si existe */
+/* Paginación (idéntica a Empleados) */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0 2rem;
+}
 
-/* (No agregamos estilos de recibos aquí, sólo para empleados) */
+.pagination button {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  color: #374151;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.pagination button:disabled {
+  color: #cccccc;
+  cursor: default;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #f2f2f2;
+}
+
+.pagination button.active {
+  background: #ef4444;
+  color: #fff;
+  font-weight: 500;
+}
+
+/* subida de cards */
+.doc-section-title {
+  font-size: 1.5rem;
+  color: #b91c1c;
+  margin: 1rem 0 0.5rem;    /* menos espacio encima para subir */
+}
+
+/* card genérica */
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Mover específicamente la card de recibos */
+.recibos-card {
+  position: relative;
+  top: -3.5rem;    /* sube la card 1.5rem; ajusta a tu gusto */
+  left: -1.5rem;   /* desplaza 1.5rem hacia la izquierda */
+  /* opcional: si quieres ajustarla al 100% del contenedor */
+  max-width: calc(100% + 1.5rem);
+}
+/* altura fija para empleados: 7 filas + header + footer */
+.empleados-card {
+  height: 35rem;            /* ajusta al tamaño de 7 rows */
+}
+
+/* fuerza altura uniforme de filas */
+.doc-table tbody tr {
+  height: 3rem;             /* fija la altura de cada fila */
+}
+
+/* estilo para filas vacías */
+.empty-row td {
+  background: transparent;
+}
+
+/* paginación ubicada al final de la card */
+.card .pagination {
+  margin-top: auto;         /* empuja la paginación al fondo */
+}
+
+/* opcional: si quieres centrar vertical las cards dentro del contenedor */
+.doc-container {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}

@@ -1,91 +1,133 @@
-/* Cronograma.css */
+/* src/components/Cronograma.css */
 
 .cronograma-card {
-    background: #fff;
-    border-radius: 8px;
-    padding: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  }
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 360px;      /* ancho ideal para columna derecha */
+  margin-left: auto;     /* a la derecha */
+  height: auto;
+}
+
+.cronograma-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.cronograma-header h3 {
+  flex: 1;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.cronograma-header .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  margin-left: 0.5rem;
+}
+
+.cronograma-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Cada sección de fecha */
+.cronograma-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section-date {
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-transform: capitalize;
+}
+
+/* Cada evento */
+.event-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.event-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.event-time {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #111827;
+  width: 4rem;
+  flex-shrink: 0;
+}
+
+.event-bar {
+  width: 2px;
+  height: 100%;
+  background: #ef4444;
+  align-self: stretch;
+  border-radius: 2px;
   
-  .cronograma-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+}
+
+.event-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.event-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.event-desc {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+/* Botón “Ver Más” al pie */
+.cronograma-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.cronograma-footer .view-more {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+}
+
+.cronograma-footer .view-more svg {
+  margin-left: 0.5rem;
+}
+
+/* Responsivo: en móvil, ocupa todo el ancho */
+@media (max-width: 768px) {
+  .cronograma-card {
+    max-width: none;
+    margin-left: 0;
   }
-  
-  .cronograma-header h3 {
-    margin: 0;
-    font-size: 1.1rem;
-    color: #111827;
-  }
-  
-  .dot {
-    color: #ef4444;
-    font-size: 1.5rem;
-    vertical-align: middle;
-    margin-left: 0.25rem;
-  }
-  
-  .view-more {
-    background: #ef4444;
-    color: #fff;
-    border: none;
-    padding: 0.3rem 0.75rem;
-    border-radius: 9999px;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-  
-  .view-more svg {
-    margin-left: 0.25rem;
-  }
-  
-  .cronograma-section + .cronograma-section {
-    margin-top: 1.5rem;
-  }
-  
-  .section-date {
-    font-size: 0.9rem;
-    color: #6b7280;
-    margin-bottom: 0.75rem;
-    text-transform: capitalize;
-  }
-  
-  .event-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.75rem;
-  }
-  
-  .event-time {
-    width: 3.5rem;
-    font-size: 0.9rem;
-    color: #374151;
-  }
-  
-  .event-bar {
-    width: 4px;
-    height: 2.5rem;
-    background: #ef4444; /* por defecto, cambia según color con Tailwind si quieres */
-    margin: 0 0.75rem;
-    border-radius: 4px;
-  }
-  
-  .event-content {
-    flex: 1;
-  }
-  
-  .event-title {
-    font-size: 0.95rem;
-    color: #111827;
-    font-weight: 500;
-  }
-  
-  .event-desc {
-    font-size: 0.8rem;
-    color: #6b7280;
-  }
-  
+}

@@ -2,16 +2,21 @@
 import React, { useState, useEffect, useRef } from "react";
 import API from "../api";
 import EmpleadoForm from "../components/EmpleadoForm.jsx";
-import ModalGenérico from "../components/ModalGenerico.jsx"; // Ya tienes este componente genérico
+import ModalGenérico from "../components/ModalGenerico.jsx";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import "./Empleados.css";
+
+const PAGE_SIZE = 10;
 
 export default function Empleados() {
   const [users, setUsers] = useState([]);
-  const [mode, setMode] = useState(null); // "create" | "edit" | "view"
+  const [mode, setMode] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [notification, setNotification] = useState(null);
   const fileInputRef = useRef();
+
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     cargarUsuarios();
@@ -21,6 +26,7 @@ export default function Empleados() {
     try {
       const { data } = await API.get("/users");
       setUsers(data);
+      setCurrentPage(1);
     } catch (err) {
       console.error(err);
       setNotification({ type: "error", text: "No se pudo cargar usuarios." });
@@ -43,13 +49,11 @@ export default function Empleados() {
     cargarUsuarios();
   };
 
-  // Exportar CSV (con token en headers)
   const handleExport = async () => {
     try {
       const response = await API.get("/users/export", {
         responseType: "blob",
       });
-      // Crear URL blob y forzar descarga
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -91,11 +95,14 @@ export default function Empleados() {
     }
   };
 
-  const modalTitle = {
-    create: "Crear empleado",
-    edit: "Editar empleado",
-    view: "Ver empleado",
-  }[mode];
+  // Paginación
+  const totalItems = users.length;
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) pages.push(i);
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pagedUsers = users.slice(start, start + PAGE_SIZE);
 
   return (
     <>
@@ -109,14 +116,10 @@ export default function Empleados() {
         <div className="emp-header">
           <h1 className="emp-title">Gestión de Empleados</h1>
           <div className="emp-actions">
-            {/* Aquí ya llamamos directamente a handleExport, sin comentarios vacíos */}
             <button className="emp-btn-export" onClick={handleExport}>
               📥 Exportar CSV
             </button>
-            <button
-              className="emp-btn-import"
-              onClick={() => fileInputRef.current.click()}
-            >
+            <button className="emp-btn-import" onClick={handleImportClick}>
               📤 Importar CSV
             </button>
             <button className="emp-btn-new" onClick={() => openForm("create")}>
@@ -144,7 +147,7 @@ export default function Empleados() {
               </tr>
             </thead>
             <tbody>
-              {users.map((u, idx) => (
+              {pagedUsers.map((u, idx) => (
                 <tr
                   key={u.id}
                   className={idx % 2 === 0 ? "emp-row-even" : "emp-row-odd"}
@@ -173,13 +176,39 @@ export default function Empleados() {
           </table>
         </div>
 
+        {/* Paginación */}
+        {totalPages > 1 && (
+          <div className="pagination">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              <FiChevronLeft /> Anterior
+            </button>
+            <ul>
+              {pages.map((p) => (
+                <li key={p}>
+                  <button
+                    className={p === currentPage ? "active" : ""}
+                    onClick={() => setCurrentPage(p)}
+                  >
+                    {p}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Siguiente <FiChevronRight />
+            </button>
+          </div>
+        )}
+
         {modalOpen && (
-          <ModalGenérico abierto={true} onClose={closeForm} título={modalTitle}>
-            <EmpleadoForm
-              mode={mode}
-              user={currentUser}
-              onSuccess={onSaved}
-            />
+          <ModalGenérico abierto onClose={closeForm} título={mode === "create" ? "Crear empleado" : mode === "edit" ? "Editar empleado" : "Ver empleado"}>
+            <EmpleadoForm mode={mode} user={currentUser} onSuccess={onSaved} />
           </ModalGenérico>
         )}
       </div>

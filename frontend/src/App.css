@@ -5,7 +5,7 @@ body, html {
     font-family: 'bold', sans-serif;
     background: #f9fafb;
     height: 100%;
-    overflow: hidden;
+    overflow: auto;
     
   }
 

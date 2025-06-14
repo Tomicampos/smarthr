@@ -1,16 +1,20 @@
 require('dotenv').config();
-const express        = require('express');
-const cors           = require('cors');
-const pool           = require('./db');
-const bcrypt         = require('bcryptjs');
-const jwt            = require('jsonwebtoken');
-const { google }     = require('googleapis');
-const multer         = require('multer');
-const fs             = require('fs');
-const pdfParse       = require('pdf-parse');
-const { PDFDocument }= require('pdf-lib');
-const csvParser      = require('csv-parser');
-const fastCsv        = require('fast-csv');
+const express                = require('express');
+const cors                   = require('cors');
+const pool                   = require('./db');
+const bcrypt                 = require('bcryptjs');
+const jwt                    = require('jsonwebtoken');
+const { google }             = require('googleapis');
+const multer                 = require('multer');
+const fs                     = require('fs');
+const pdfParse               = require('pdf-parse');
+const { PDFDocument }        = require('pdf-lib');
+const csvParser              = require('csv-parser');
+const fastCsv                = require('fast-csv');
+const { enviarNotificacion } = require('./src/mailer.js');
+const nodemailer             = require('nodemailer');
+
+
 
 // ─── Crear app Y configurar body parsers ────────────────────────
 const app = express();
@@ -636,10 +640,108 @@ app.get('/api/reclutamiento/:pid/postulantes/:uid/cv/download', async (req, res)
   res.setHeader('Content-Type','application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="${u.cv_filename}"`);
   res.send(u.cv_blob);
+
+
 });
-// ─── NOTIFICACIONES (placeholder) ─────────────────────────────────
-app.get('/api/notifications', (req, res) => {
-  res.json([]);
+// ————————————————
+// RUTA HISTÓRICO
+// ————————————————
+app.get('/api/notificaciones', async (req, res) => {
+  const [rows] = await pool.query(
+    `SELECT n.id, n.asunto, n.creado_por, n.creado_en,
+            COUNT(d.id) AS total_destinatarios,
+            SUM(d.estado='enviado') AS enviados
+     FROM notificaciones n
+     LEFT JOIN notificaciones_destinatarios d
+       ON d.notificacion_id = n.id
+     GROUP BY n.id
+     ORDER BY n.creado_en DESC`
+  );
+  res.json(rows);
+});
+
+// ————————————————
+// RUTA DETALLE
+// ————————————————
+app.get('/api/notificaciones/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const [[info]] = await pool.query(
+    `SELECT id, asunto, cuerpo, creado_por, creado_en
+     FROM notificaciones
+     WHERE id = ?`, [id]
+  );
+  const [dest] = await pool.query(
+    `SELECT d.empleado_id AS id, u.nombre, u.email, d.estado, d.enviado_en
+     FROM notificaciones_destinatarios d
+     JOIN users u ON u.id = d.empleado_id
+     WHERE d.notificacion_id = ?
+     ORDER BY d.id`, [id]
+  );
+  res.json({ info, destinatarios: dest });
+});
+
+// ————————————————
+// CREAR + ENVIAR (con historial y plantillas)
+// ————————————————
+app.post('/api/notificaciones', async (req, res) => {
+  const { asunto, cuerpo } = req.body;
+  const usuarioId = req.user.id;
+
+  // 1) Insertar cabecera
+  const [{ insertId }] = await pool.query(
+    `INSERT INTO notificaciones (asunto, cuerpo, creado_por)
+     VALUES (?, ?, ?)`,
+    [asunto, cuerpo, usuarioId]
+  );
+
+  // 2) Obtener todos los empleados
+  const [empleados] = await pool.query(
+    `SELECT id, nombre, email FROM users`
+  );
+
+  // 3) Insertar destinatarios en BD
+  const valores = empleados.map(e => [insertId, e.id]);
+  await pool.query(
+    `INSERT INTO notificaciones_destinatarios
+       (notificacion_id, empleado_id)
+     VALUES ?`,
+    [valores]
+  );
+
+  // 4) Enviar mails sólo a quienes tengan un email válido
+  try {
+    for (let emp of empleados) {
+      if (!emp.email || !emp.email.includes('@')) {
+        console.warn(
+          `⚠️ Usuario ${emp.id} (“${emp.nombre}”) con email inválido (“${emp.email}”), se omite.`
+        );
+        // también podrías marcar en BD como 'sin dirección'
+        continue;
+      }
+
+      await enviarNotificacion({
+        to: emp.email,
+        asunto,
+        nombre: emp.nombre,
+        cuerpoHtml: cuerpo
+          .replace(/{{nombre}}/g, emp.nombre)
+          .replace(/{{fecha}}/g, new Date().toLocaleDateString())
+      });
+
+      // Marcar como enviado
+      await pool.query(
+        `UPDATE notificaciones_destinatarios
+           SET estado='enviado', enviado_en=NOW()
+         WHERE notificacion_id=? AND empleado_id=?`,
+        [insertId, emp.id]
+      );
+    }
+
+    return res.status(201).json({ id: insertId });
+  } catch (err) {
+    console.error('❌ Falló el envío general:', err);
+    return res.status(500).json({ error: 'Error enviando notificaciones' });
+  }
 });
 
 // ─── GOOGLE CALENDAR (ya configurado) ──────────────────────────────
