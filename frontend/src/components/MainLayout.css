@@ -1,35 +1,25 @@
 /* src/components/MainLayout.css */
 
-/* Contenedor raíz: sidebar + contenido */
 .main-layout {
   display: flex;
-  height: 100vh;
-  overflow: hidden;           /* el scroll lo manejamos en .content-scroll */
+  height: 100vh; /* ocupa toda la ventana */
 }
 
-/* Wrap de header + main */
 .main-wrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100%; /* junto al sidebar */
 }
 
-/* Área principal bajo el header */
 .main-content {
   flex: 1;
-  background: var(--bg);      /* usa tu variable de fondo */
-  overflow: hidden;
+  display: flex;
+  overflow: auto;   /* <— permitimos siempre scroll */
 }
 
-/* Contenedor scrollable para el contenido de cada página */
 .content-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--gap);        /* mismo padding que en Dashboard */
-  font-family: 'Inter', sans-serif;
-}
-
-/* Asegura ancho completo antes de aplicar padding interno */
-.content-scroll > * {
-  width: 100%;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  overflow: auto;   /* <— permitimos scroll interno si hace falta */
 }

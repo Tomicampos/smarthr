@@ -54,9 +54,7 @@ export default function Header() {
         <div className="datetime">
           {formattedDate}, {formattedTime} HS
         </div>
-        <button className="bell-btn">
-          <FiBell className="icon" />
-        </button>
+        
       </div>
 
       <div className="header-greeting">

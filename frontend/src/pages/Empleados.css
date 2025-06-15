@@ -18,8 +18,9 @@
   }
   
   .emp-title {
-    font-size: 1.75rem;
-    color: #b91c1c; /* rojo oscuro */
+    font-size: 1.4rem;
+    color: #ef4444;
+    font-weight: normal;
   }
   
   .emp-btn-new {

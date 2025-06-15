@@ -1,102 +1,51 @@
-/* Documentacion.css */
-
-/* ──────────────────────────────────────────────────────────────── */
-/* Contenedor general */
+/* Contenedor principal */
 .doc-container {
-  padding: 2rem;
+  padding: 1rem;
   background: #f9fafb;
-  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-/* Tarjeta genérica */
+/* Card genérica */
 .card {
   background: #fff;
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  margin-bottom: 2rem;
-}
-
-/* Título de sección */
-.doc-section-title {
-  font-size: 1.5rem;
-  color: #b91c1c;
-  margin: 1.5rem 0 0.75rem;
-}
-
-/* Sobreescribe margin-bottom de la última card */
-.card:last-of-type {
-  margin-bottom: 0;
-}
-/* ALERTA flotante superior derecha */
-.alert {
-  position: fixed;
-  top: 5rem;           /* Ajusta este valor para desplazar verticalmente */
-  right: 1rem;
   display: flex;
-  align-items: start;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  z-index: 1000;
-  max-width: 320px;
-  background: white;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-/* Icono dentro de alerta */
-.alert-icon {
-  margin-right: 0.75rem;
-}
-.alert-icon .icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  stroke-width: 2;
+/* Título dentro de la card */
+.card-title {
+  font-size: 1.4rem;
+  color: #ef4444;
+  font-weight: normal;
+  margin: 0;
 }
 
-/* Contenido de la alerta */
-.alert-content {
+/* Formulario de upload */
+.doc-upload-form {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.doc-upload-form input[type="file"] {
   flex: 1;
 }
-.alert-title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-.alert-message {
-  margin: 0.25rem 0 0;
-  font-size: 0.875rem;
-  color: #4b5563;
+.doc-upload-form .btn-red {
+  flex-shrink: 0;
 }
 
-/* Bordes según tipo */
-.alert-success {
-  border-left: 4px solid #10b981; /* verde */
-}
-.alert-error {
-  border-left: 4px solid #ef4444; /* rojo  */
-}
-
-/* ──────────────────────────────────────────────────────────────── */
-/* Título */
-.doc-title {
-  font-size: 1.5rem;
-  color: #333;
-  margin-bottom: 1rem;
-}
-
-/* ──────────────────────────────────────────────────────────────── */
-/* Tabla de empleados */
-
-/* wrapper que envuelve la tabla */
+/* Wrapper con scroll interno para tablas */
 .doc-table-wrapper {
-  overflow-x: auto;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  flex: 1;
+  overflow: auto;
 }
 
-/* tabla */
+/* Tabla */
 .doc-table {
   width: 100%;
   border-collapse: separate;
@@ -105,8 +54,8 @@
 .doc-table th,
 .doc-table td {
   padding: 0.75rem 1rem;
-  text-align: left;
   font-size: 0.9rem;
+  text-align: left;
 }
 .doc-table thead {
   background: #fff1f1;
@@ -124,20 +73,18 @@
 .doc-table tbody tr:hover {
   background: #f2f2f2;
 }
-.no-data {
-  text-align: center;
-  color: #666;
-  padding: 1rem;
+/* Filas vacías */
+.empty-row td {
+  background: transparent;
 }
 
-/* ──────────────────────────────────────────────────────────────── */
 /* Botones */
 .btn-red {
   background: #dc2626;
-  color: white;
+  color: #fff;
+  border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  border: none;
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -151,100 +98,54 @@
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: all 0.2s;
 }
 .btn-outline-red:hover {
   background: #dc2626;
-  color: white;
+  color: #fff;
 }
 
-/* Paginación (idéntica a Empleados) */
+/* Paginación */
 .pagination {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin: 1rem 0 2rem;
+  gap: 0.5rem;
+  margin-top: auto; /* para que siempre quede al pie de la card */
 }
-
 .pagination button {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
   background: none;
   border: none;
   color: #374151;
-  cursor: pointer;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 6px;
+  cursor: pointer;
   transition: background 0.2s;
 }
-
+.pagination button:hover:not(:disabled) {
+  background: #ef4444;
+}
 .pagination button:disabled {
-  color: #cccccc;
+  color: #ccc;
   cursor: default;
 }
-
-.pagination button:hover:not(:disabled) {
-  background: #f2f2f2;
-}
-
 .pagination button.active {
   background: #ef4444;
   color: #fff;
   font-weight: 500;
 }
 
-/* subida de cards */
-.doc-section-title {
-  font-size: 1.5rem;
-  color: #b91c1c;
-  margin: 1rem 0 0.5rem;    /* menos espacio encima para subir */
-}
-
-/* card genérica */
-.card {
+/* Alerta flotante */
+.alert {
+  position: fixed;
+  top: 4rem;
+  right: 1rem;
   background: #fff;
-  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 0.5rem;
   padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  margin-bottom: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  z-index: 1000;
 }
-
-/* Mover específicamente la card de recibos */
-.recibos-card {
-  position: relative;
-  top: -3.5rem;    /* sube la card 1.5rem; ajusta a tu gusto */
-  left: -1.5rem;   /* desplaza 1.5rem hacia la izquierda */
-  /* opcional: si quieres ajustarla al 100% del contenedor */
-  max-width: calc(100% + 1.5rem);
-}
-/* altura fija para empleados: 7 filas + header + footer */
-.empleados-card {
-  height: 35rem;            /* ajusta al tamaño de 7 rows */
-}
-
-/* fuerza altura uniforme de filas */
-.doc-table tbody tr {
-  height: 3rem;             /* fija la altura de cada fila */
-}
-
-/* estilo para filas vacías */
-.empty-row td {
-  background: transparent;
-}
-
-/* paginación ubicada al final de la card */
-.card .pagination {
-  margin-top: auto;         /* empuja la paginación al fondo */
-}
-
-/* opcional: si quieres centrar vertical las cards dentro del contenedor */
-.doc-container {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
+.alert-content { display: flex; align-items: center; }
+.alert-title { margin: 0; font-size: 1rem; color: #1f2937; }
+.alert-success { border-left: 4px solid #10b981; }
+.alert-error   { border-left: 4px solid #ef4444; }

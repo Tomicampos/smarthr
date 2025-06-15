@@ -16,8 +16,9 @@
 /* Encabezado */
 .sidebar-header h2 {
   margin: 0 0 1.5rem;
-  font-size: 1.25rem;
+  font-size: 1.40rem;
   color: #111827;
+  font-weight: normal;
 }
 
 /* Menú principal */

@@ -1,0 +1,173 @@
+/* src/pages/Agenda.css */
+
+/* 1) El wrapper principal ahora ocupa todo el alto del padre (.content-scroll) */
+.agenda-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;               /* crece para llenar .content-scroll */
+  height: 100%;          /* importantísimo */
+  background: #f9fafb;
+}
+
+/* 2) La card blanca también ocupa todo ese espacio */
+.agenda-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  flex: 1;               /* ocupa todo el alto de .agenda-container */
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+
+/* Título dentro de la card */
+.agenda-title {
+  margin: 0 0 1rem;
+  font-size: 1.50rem;
+  color: #ef4444;
+  font-weight: normal;
+}
+
+/* Header navegación */
+.agenda-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.agenda-mes {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #374151;
+}
+.agenda-año {
+  margin-left: 0.5rem;
+  color: #6b7280;
+}
+.agenda-nav button {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0 0.5rem;
+}
+.agenda-nav button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Grid del calendario */
+.agenda-grid {
+  display: grid;
+  grid-template-columns: repeat(7,1fr);
+  /* filas de 100px de alto (puedes ajustar) */
+  grid-auto-rows: 100px;
+  border-top: 1px solid #e5e7eb;
+  border-left: 1px solid #e5e7eb;
+  flex: 1;
+}
+.agenda-dia-nombre {
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: bold;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-right: 1px solid #e5e7eb;
+}
+.agenda-celda {
+  position: relative;
+  padding: 0.5rem;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+.agenda-celda.vacia {
+  background: #fafafa;
+}
+.agenda-numero {
+  width: 1.5rem; height: 1.5rem;
+  line-height: 1.5rem; text-align: center;
+  border-radius: 9999px; cursor: pointer;
+  transition: background 0.2s;
+}
+.agenda-numero:hover {
+  background: #e5e7eb;
+}
+.agenda-numero.hoy {
+  background: #dc2626;
+  color: #fff;
+}
+.agenda-eventos {
+  margin-top: 0.25rem;
+  max-height: calc(100% - 1.5rem);
+  overflow-y: auto;
+}
+.evt {
+  font-size: 0.75rem;
+  padding: 0.25rem;
+  border-radius: 4px;
+  margin-bottom: 0.25rem;
+}
+.evt-azul  { background: #bfdbfe; color: #1e3a8a; }
+.evt-rojo  { background: #fecaca; color: #991b1b; }
+.evt-verde { background: #bbf7d0; color: #055e46; }
+
+/* Modal */
+.agenda-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.agenda-modal {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.agenda-modal h2 {
+  margin-top: 0;
+  color: #374151;
+}
+.agenda-modal label {
+  display: block;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+.agenda-modal input {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.25rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+.agenda-modal-actions {
+  margin-top: 1.5rem;
+  text-align: right;
+}
+.agenda-modal-actions button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+.agenda-modal-actions button:first-child {
+  background: #f3f4f6;
+  color: #374151;
+  margin-right: 0.5rem;
+}
+.agenda-modal-actions button:last-child {
+  background: #dc2626;
+  color: #fff;
+}

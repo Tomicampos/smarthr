@@ -6,7 +6,7 @@ import EditarDocsModal from '../components/EditarDocsModal';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const RECIBOS_PAGE_SIZE = 2;
-const EMP_PAGE_SIZE = 7;
+const EMP_PAGE_SIZE = 5;
 
 export default function Documentacion() {
   const [file, setFile] = useState(null);
@@ -18,16 +18,16 @@ export default function Documentacion() {
 
   // Paginación recibos
   const [recPage, setRecPage] = useState(1);
-  const recTotal = list.length;
-  const recPages = Math.ceil(recTotal / RECIBOS_PAGE_SIZE);
-  const recStart = (recPage - 1) * RECIBOS_PAGE_SIZE;
+  const recTotal  = list.length;
+  const recPages  = Math.ceil(recTotal / RECIBOS_PAGE_SIZE);
+  const recStart  = (recPage - 1) * RECIBOS_PAGE_SIZE;
   const pagedRecibos = list.slice(recStart, recStart + RECIBOS_PAGE_SIZE);
 
   // Paginación empleados
   const [empPage, setEmpPage] = useState(1);
-  const empTotal = empleados.length;
-  const empPages = Math.ceil(empTotal / EMP_PAGE_SIZE);
-  const empStart = (empPage - 1) * EMP_PAGE_SIZE;
+  const empTotal  = empleados.length;
+  const empPages  = Math.ceil(empTotal / EMP_PAGE_SIZE);
+  const empStart  = (empPage - 1) * EMP_PAGE_SIZE;
   const pagedEmps = empleados.slice(empStart, empStart + EMP_PAGE_SIZE);
 
   useEffect(() => {
@@ -82,12 +82,8 @@ export default function Documentacion() {
       const fn = (cd.match(/filename="?(.+)"?/) || [])[1] || `recibo_${id}.pdf`;
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       const a = document.createElement('a');
-      a.href = url;
-      a.download = fn;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+      a.href = url; a.download = fn; document.body.appendChild(a);
+      a.click(); a.remove(); window.URL.revokeObjectURL(url);
     } catch {
       setNotif({ type: 'error', title: 'No se pudo descargar el recibo' });
       setTimeout(() => setNotif(null), 5000);
@@ -112,34 +108,25 @@ export default function Documentacion() {
   return (
     <div className="doc-container">
       {notif && (
-        <div className={`alert alert-${notif.type}`} role="alert">
+        <div className={`alert alert-${notif.type}`}>
           <div className="alert-content">
             <h4 className="alert-title">{notif.title}</h4>
           </div>
         </div>
       )}
 
-      {/* Recibos de Sueldo */}
-      <h1 className="doc-section-title">Recibos de Sueldo</h1>
+      {/* ────── Recibos de Sueldo ────── */}
       <div className="card recibos-card">
+        <h2 className="card-title">Recibos de Sueldo</h2>
         <form onSubmit={handleUpload} className="doc-upload-form">
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={e => setFile(e.target.files[0])}
-          />
-          <button type="submit" className="btn-red">
-            Subir PDF masivo
-          </button>
+          <input type="file" accept="application/pdf" onChange={e => setFile(e.target.files[0])} />
+          <button type="submit" className="btn-red">Subir PDF masivo</button>
         </form>
-
         <div className="doc-table-wrapper">
           <table className="doc-table">
             <thead>
               <tr>
-                <th>Mes/Año</th>
-                <th>Archivo</th>
-                <th>Acciones</th>
+                <th>Mes/Año</th><th>Archivo</th><th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -148,26 +135,19 @@ export default function Documentacion() {
                   <td>{`${r.period_month}/${r.period_year}`}</td>
                   <td>{r.file_name}</td>
                   <td>
-                    <button className="btn-outline-red" onClick={() => download(r.id)}>
-                      Descargar
-                    </button>
-                    <button className="btn-outline-red" onClick={() => remove(r.id)}>
-                      Eliminar
-                    </button>
+                    <button className="btn-outline-red" onClick={() => download(r.id)}>Descargar</button>
+                    <button className="btn-outline-red" onClick={() => remove(r.id)}>Eliminar</button>
                   </td>
                 </tr>
               ))}
-              {Array.from({ length: RECIBOS_PAGE_SIZE - pagedRecibos.length }).map((_, i) => (
-                <tr key={`empty-rec-${i}`} className="empty-row">
-                  <td>&nbsp;</td>
-                  <td>&nbsp;</td>
-                  <td>&nbsp;</td>
-                </tr>
-              ))}
+              {/* filas vacías */}
+              {Array.from({ length: RECIBOS_PAGE_SIZE - pagedRecibos.length })
+                .map((_, i) => <tr key={i} className="empty-row"><td colSpan="3">&nbsp;</td></tr>)
+              }
             </tbody>
           </table>
         </div>
-
+        {/* Paginación */}
         {recPages > 1 && (
           <div className="pagination">
             <button onClick={() => setRecPage(p => Math.max(p - 1, 1))} disabled={recPage === 1}>
@@ -175,83 +155,70 @@ export default function Documentacion() {
             </button>
             {[...Array(recPages)].map((_, i) => (
               <button
-                key={i + 1}
+                key={i}
                 className={recPage === i + 1 ? 'active' : ''}
                 onClick={() => setRecPage(i + 1)}
-              >
-                {i + 1}
-              </button>
+              >{i + 1}</button>
             ))}
-            <button
-              onClick={() => setRecPage(p => Math.min(p + 1, recPages))}
-              disabled={recPage === recPages}
-            >
+            <button onClick={() => setRecPage(p => Math.min(p + 1, recPages))} disabled={recPage === recPages}>
               Siguiente <FiChevronRight />
             </button>
           </div>
         )}
       </div>
 
-      {/* Documentación de Empleados */}
-      <h1 className="doc-section-title">Documentación de Empleados</h1>
+      {/* ────── Documentación de Empleados ────── */}
       <div className="card empleados-card">
+        <h2 className="card-title">Documentación de Empleados</h2>
         {cargando ? (
-          <p>Cargando empleados...</p>
+          <p>Cargando empleados…</p>
         ) : (
-          <div className="doc-table-wrapper">
-            <table className="doc-table">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Email</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pagedEmps.map(emp => (
-                  <tr key={emp.id}>
-                    <td>{emp.nombre}</td>
-                    <td>{emp.email}</td>
-                    <td>
-                      <button className="btn-outline-red" onClick={() => abrirModal(emp)}>
-                        Editar Documentos
-                      </button>
-                    </td>
+          <>
+            <div className="doc-table-wrapper">
+              <table className="doc-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th><th>Email</th><th>Acciones</th>
                   </tr>
+                </thead>
+                <tbody>
+                  {pagedEmps.map(emp => (
+                    <tr key={emp.id}>
+                      <td>{emp.nombre}</td>
+                      <td>{emp.email}</td>
+                      <td>
+                        <button className="btn-outline-red" onClick={() => abrirModal(emp)}>
+                          Editar Documentos
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {/* filas vacías */}
+                  {Array.from({ length: EMP_PAGE_SIZE - pagedEmps.length }).map((_, i) => (
+                    <tr key={i} className="empty-row"><td colSpan="3">&nbsp;</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* Paginación */}
+            {empPages > 1 && (
+              <div className="pagination">
+                <button onClick={() => setEmpPage(p => Math.max(p - 1, 1))} disabled={empPage === 1}>
+                  <FiChevronLeft /> Anterior
+                </button>
+                {[...Array(empPages)].map((_, i) => (
+                  <button
+                    key={i}
+                    className={empPage === i + 1 ? 'active' : ''}
+                    onClick={() => setEmpPage(i + 1)}
+                  >{i + 1}</button>
                 ))}
-                {Array.from({ length: EMP_PAGE_SIZE - pagedEmps.length }).map((_, i) => (
-                  <tr key={`empty-emp-${i}`} className="empty-row">
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {empPages > 1 && (
-          <div className="pagination">
-            <button onClick={() => setEmpPage(p => Math.max(p - 1, 1))} disabled={empPage === 1}>
-              <FiChevronLeft /> Anterior
-            </button>
-            {[...Array(empPages)].map((_, i) => (
-              <button
-                key={i + 1}
-                className={empPage === i + 1 ? 'active' : ''}
-                onClick={() => setEmpPage(i + 1)}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => setEmpPage(p => Math.min(p + 1, empPages))}
-              disabled={empPage === empPages}
-            >
-              Siguiente <FiChevronRight />
-            </button>
-          </div>
+                <button onClick={() => setEmpPage(p => Math.min(p + 1, empPages))} disabled={empPage === empPages}>
+                  Siguiente <FiChevronRight />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

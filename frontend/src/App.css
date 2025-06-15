@@ -9,11 +9,30 @@ body, html {
     
   }
 
-  html, body, #root {
-    height: 100%;
-    margin: 0;
-  }
-  
+  html, body, #root, .app-root {
+  height: 100%;
+  margin: 0;
+}
+.app-root {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+.app-main {
+  flex: 1;              /* TODO el espacio bajo el header */
+  display: flex;
+}
+.app-content {
+  flex: 1;              /* TODO el espacio al lado del sidebar */
+  display: flex;
+  flex-direction: column;
+}
   .login-container {
     display: flex; 
     align-items: center; 
@@ -100,7 +119,7 @@ body, html {
   }
   
   .login-card .footer a {
-    color: #4f46e5;
+    color: #ED3237;
   }
  
   .calendar-wrapper {
@@ -130,3 +149,4 @@ body, html {
     border-color: #e5e7eb;
   }
   
+ 

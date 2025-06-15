@@ -1,75 +1,312 @@
+/* src/pages/Reclutamiento.css */
+
+/* Contenedor general */
 .rec-container {
-    padding: 2rem;
-    background: #f9fafb;
-    min-height: 100%;
-  }
-  .rec-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 1rem;
-  }
-  .rec-search {
-    width:100%; padding:0.5rem 1rem; margin-bottom:1rem;
-    border:1px solid #d1d5db; border-radius:6px; box-sizing:border-box;
-  }
-  .rec-table {
-    width:100%; border-collapse:collapse; background:white;
-    border-radius:8px; overflow:hidden; margin-bottom:1rem;
-  }
-  .rec-table th, .rec-table td {
-    padding:0.75rem 1rem; font-size:0.9rem; text-align:left;
-  }
-  .rec-table thead { background:#fff1f1; color:#b91c1c; }
-  .rec-table tbody tr:nth-child(even){ background:#fbfbfb; }
-  .rec-table tbody tr:hover{ background:#f2f2f2; }
-  .btn-red {
-    background:#dc2626; color:white; padding:.5rem 1rem;
-    border:none; border-radius:6px; cursor:pointer;
-  }
-  .btn-outline-red {
-    background:transparent; color:#dc2626;
-    border:1px solid #dc2626; padding:.4rem .8rem;
-    border-radius:6px; cursor:pointer;
-  }
-  .btn-primary {
-    background:#dc2626; color:white; padding:.5rem 1rem;
-    border:none; border-radius:6px; cursor:pointer;
-  }
-  .btn-outline-red:hover, .btn-primary:hover {
-    background:#b91c1c; color:white;
-  }
-  
-  /* Details */
-  .rec-detail {
-    border:1px solid #f3f3f3; padding:1rem; border-radius:8px;
-    background:white;
-  }
-  .timeline {
-    display:flex; justify-content:space-between; margin-bottom:1rem;
-  }
-  .timeline .step {
-    text-align:center; flex:1; position:relative;
-  }
-  .timeline .step:not(:last-child)::after {
-    content:""; position:absolute; top:12px; right:-50%;
-    width:100%; height:2px; background:#f3f3f3; z-index:0;
-  }
-  .timeline .step.done:not(:last-child)::after {
-    background:#dc2626;
-  }
-  .circle {
-    width:24px; height:24px; border-radius:50%; margin:0 auto;
-    line-height:24px; background:#f3f3f3; color:white; z-index:1;
-  }
-  .step.done .circle { background:#dc2626; }
-  .label { margin-top:0.5rem; font-size:0.75rem; color:#4b5563; }
-  
-  /* Postulantes */
-  .post-table {
-    width:100%; border-collapse:collapse; margin-top:1rem;
-  }
-  .post-table th, .post-table td {
-    padding:0.5rem 0.75rem; font-size:0.85rem;
-    border-bottom:1px solid #eee;
-  }
-  .no-data { text-align:center; color:#777; }
-  
+  padding: 1.5rem;
+  box-sizing: border-box;
+  height: 100%;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card principal */
+.rec-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;    /* <-- permitimos overflow */
+  min-height: 0;
+}
+
+/* Header con título y controles */
+.rec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+/* Título */
+.rec-title {
+  font-size: 1.3rem;
+  color: #ef4444;
+  font-weight: normal;
+  margin: 0 0 1.5rem;
+}
+.rec-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.rec-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.75rem;
+}
+.select-wrapper {
+  position: relative;
+  flex: 1 1 200px;        /* igual que tus inputs/selects */
+  max-width: 240px;        /* ajusta al ancho que quieras */
+}
+
+/* estilos básicos de tu select */
+.select-filter {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  padding-right: 2.5rem;   /* espacio para el ícono */
+  font-size: 0.9rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  appearance: none;        /* quita flecha nativa */
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+/* ícono superpuesto */
+.select-icon {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  width: 1rem;
+  height: 1rem;
+  fill: #6b7280;           /* gris medio */
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+/* focus en el select */
+.select-filter:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+  border-color: none;
+}
+
+
+.rec-controls input,
+.rec-controls select {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+/* Wrapper para scroll vertical sólo */
+.rec-table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+/* Tabla */
+.rec-table {
+  width:100%; border-collapse: separate; border-spacing:0;
+}
+
+.rec-table thead {
+  background-color: #f9f9f9;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.rec-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #b91c1c;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.rec-table td {
+  padding: 0.75rem 1rem;
+  color: #444444;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Filas alternadas */
+.rec-row-even {
+  background-color: #ffffff;
+}
+
+.rec-row-odd {
+  background-color: #fbfbfb;
+}
+
+/* Hover suave */
+.rec-table tbody tr:hover {
+  background-color: #f2f2f2;
+}
+
+/* Flecha expandir */
+.rec-arrow {
+  text-align: center;
+  cursor: pointer;
+  width: 1.5rem;
+}
+
+/* Detalle interno */
+.rec-detail {
+  background:#fff; border:1px solid #f3f3f3; border-radius:8px;
+  padding:1rem; margin-top:1rem;
+  max-height:300px;          /* ajusta según necesites */
+  overflow-y:auto;           /* scroll sólo vertical */
+}
+/* Timeline */
+.timeline {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.timeline .step {
+  flex: 1;
+  position: relative;
+  text-align: center;
+}
+.timeline .step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  right: -50%;
+  width: 100%;
+  height: 2px;
+  background: #f3f3f3;
+  z-index: 0;
+}
+.timeline .step.done:not(:last-child)::after {
+  background: #dc2626;
+}
+.circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin: 0 auto;
+  line-height: 24px;
+  background: #f3f3f3;
+  color: white;
+  z-index: 1;
+}
+.step.done .circle {
+  background: #dc2626;
+}
+.label {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #4b5563;
+}
+
+/* Tabla de postulantes */
+.post-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.post-table th,
+.post-table td {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+.post-table tbody tr:nth-child(even) {
+  background: #fbfbfb;
+}
+.post-table tbody tr:hover {
+  background: #f2f2f2;
+}
+
+/* Message “no hay datos” */
+.no-data {
+  text-align: center;
+  color: #777;
+  padding: 1rem;
+}
+
+/* Botones */
+.btn-red,
+.btn-primary {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.btn-outline-red {
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-red:hover,
+.btn-primary:hover,
+.btn-outline-red:hover {
+  background: #b91c1c;
+  color: white;
+}
+
+/* Paginación */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.pagination button {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  color: #374151;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.pagination button:disabled {
+  color: #cccccc;
+  cursor: default;
+}
+.pagination button:hover:not(:disabled) {
+  background: #f2f2f2;
+}
+.pagination ul {
+  list-style: none;
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+.pagination li button {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.pagination li button:hover {
+  background: #f2f2f2;
+}
+.pagination li button.active {
+  background: #ef4444;
+  color: #fff;
+  font-weight: 500;
+}

@@ -9,13 +9,14 @@
   background: #fff;
   border-radius: 8px;
   padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 5px 5px 10px rgba(0,0,0,0.09);
 }
 
 .notif-card h3 {
   margin-top: 0;
   font-size: 1.25rem;
-  color: #111827;
+  color: #dc2626;
+  font-weight: normal;
 }
 
 .notif-card label {
@@ -33,10 +34,9 @@
   border: 1px solid #d1d5db;
   border-radius: 6px;
   box-sizing: border-box;
-}
+  resize: none;
+  outline: none;
 
-.notif-checkboxes {
-  margin-top: 1rem;
 }
 
 .notif-actions {
