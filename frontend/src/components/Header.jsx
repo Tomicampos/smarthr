@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { FiSearch, FiBell } from 'react-icons/fi';
 import './Header.css';
-
 // Decodifica manualmente el payload de un JWT
 function decodePayload(token) {
   try {
@@ -14,18 +13,47 @@ function decodePayload(token) {
   }
 }
 
+// Capitaliza la primera letra de cada palabra
+function capitalizeWords(str) {
+  return str
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export default function Header() {
   const [username, setUsername] = useState('Usuario');
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
-    const token = localStorage.getItem('smarthr_token');
+    // — Leemos el token exacto que guardás en AppLogin —
+    const token = localStorage.getItem('token');
     if (token) {
       const payload = decodePayload(token);
-      const email = payload.email || '';
-      setUsername(email.split('@')[0] || 'Usuario');
+      let name = '';
+
+      // 1) Si hay campo "name" en el payload, lo usamos
+      if (payload.name) {
+        name = payload.name;
+      }
+      // 2) Si no, si viene "nombre" en el payload
+      else if (payload.nombre) {
+        name = payload.nombre;
+      }
+      // 3) Si no, tomamos la parte local del email
+      else if (payload.email) {
+        name = payload.email.split('@')[0];
+      }
+
+      if (name) {
+        // Reemplazamos puntos, guiones o guiones bajos por espacios y capitalizamos
+        name = name.replace(/[\._-]+/g, ' ');
+        setUsername(capitalizeWords(name));
+      }
     }
 
+    // Actualizar la hora cada minuto
     const timer = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(timer);
   }, []);
@@ -46,13 +74,14 @@ export default function Header() {
             type="text"
             placeholder="Buscar..."
             className="search-input"
+        
           />
         </div>
       </div>
 
       <div className="header-right">
         <div className="datetime">
-          {formattedDate}, {formattedTime} HS
+          {formattedDate}, {formattedTime} Hs
         </div>
         
       </div>

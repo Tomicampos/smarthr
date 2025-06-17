@@ -1,19 +1,16 @@
-// src/components/EditarDocsModal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import API from '../api';
-import ModalGenérico from './ModalGenerico';     // ← ahora usamos el modal común
-import './EditarDocsModal.css'; // Solo estilos internos de la tabla, botones, etc.
+import ModalGenerico from './ModalGenerico';
+import { FiDownload, FiTrash2 } from 'react-icons/fi';
+import { useToast } from './ToastContext';
+import './EditarDocsModal.css';
 
-/**
- * Props:
- *  - empleado: { id, nombre, email }
- *  - onClose: función para cerrar el modal
- *  - mostrarNotificacion: (tipo, texto) => void
- */
-export default function EditarDocsModal({ empleado, onClose, mostrarNotificacion }) {
+export default function EditarDocsModal({ empleado, onClose }) {
+  const toast = useToast();
   const [docs, setDocs] = useState([]);
   const [cargandoDocs, setCargandoDocs] = useState(true);
-  const [file, setFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef();
   const [subiendo, setSubiendo] = useState(false);
 
   useEffect(() => {
@@ -25,93 +22,105 @@ export default function EditarDocsModal({ empleado, onClose, mostrarNotificacion
       setCargandoDocs(true);
       const { data } = await API.get(`/empleados/${empleado.id}/documentos`);
       setDocs(data);
-    } catch (err) {
-      console.error('Error al cargar docs del empleado:', err);
+    } catch {
+      toast.error('No se pudieron cargar los documentos.');
       setDocs([]);
-      mostrarNotificacion('error', 'No se pudieron cargar los documentos.');
     } finally {
       setCargandoDocs(false);
     }
   }
 
+  const handleFileSelect = e => {
+    setSelectedFile(e.target.files[0] || null);
+  };
+
   async function handleUpload(e) {
     e.preventDefault();
-    if (!file) return;
+    if (!selectedFile) return;
     setSubiendo(true);
     const form = new FormData();
-    form.append('file', file);
+    form.append('file', selectedFile);
     try {
       await API.post(`/empleados/${empleado.id}/documentos`, form, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      mostrarNotificacion('success', 'Documento cargado exitosamente.');
-      setFile(null);
+      toast.success('Documento cargado exitosamente.');
+      setSelectedFile(null);
       fetchDocumentos();
-    } catch (err) {
-      console.error('Error subiendo documento:', err);
-      mostrarNotificacion('error', 'No se pudo subir el documento.');
+    } catch {
+      toast.error('No se pudo subir el documento.');
     } finally {
-      setTimeout(() => setSubiendo(false), 500);
+      setTimeout(() => setSubiendo(false), 300);
     }
   }
 
-  const descargarDocumento = async docId => {
+  const descargarDocumento = async id => {
     try {
       const res = await API.get(
-        `/empleados/${empleado.id}/documentos/${docId}/download`,
+        `/empleados/${empleado.id}/documentos/${id}/download`,
         { responseType: 'blob' }
       );
-      const disposition = res.headers['content-disposition'] || '';
-      const match = disposition.match(/filename="?(.+)"?/);
-      const filename = match ? match[1] : `documento_${docId}`;
-      const url = window.URL.createObjectURL(res.data);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Error descargando documento:', err);
-      mostrarNotificacion('error', 'No se pudo descargar el documento.');
+      const cd = res.headers['content-disposition'] || '';
+      const fn = (cd.match(/filename="?(.+)"?/) || [])[1] || `documento_${id}`;
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url; a.download = fn; document.body.appendChild(a);
+      a.click(); a.remove(); URL.revokeObjectURL(url);
+    } catch {
+      toast.error('No se pudo descargar el documento.');
     }
   };
 
-  const eliminarDocumento = async docId => {
-    if (!window.confirm('¿Seguro que quieres eliminar este documento?')) return;
+  const eliminarDocumento = async id => {
+    if (!window.confirm('¿Eliminar este documento?')) return;
     try {
-      await API.delete(`/empleados/${empleado.id}/documentos/${docId}`);
-      mostrarNotificacion('success', 'Documento eliminado exitosamente.');
+      await API.delete(`/empleados/${empleado.id}/documentos/${id}`);
+      toast.success('Documento eliminado exitosamente.');
       fetchDocumentos();
-    } catch (err) {
-      console.error('Error eliminando documento:', err);
-      mostrarNotificacion('error', 'No se pudo eliminar el documento.');
+    } catch {
+      toast.error('No se pudo eliminar el documento.');
     }
   };
 
   return (
-    <ModalGenérico abierto={true} onClose={onClose} título={`Documentos de ${empleado.nombre}`}>
-      {/* ─── Subir nuevo documento ────────────────────────────────── */}
+    <ModalGenerico
+      abierto={true}
+      onClose={onClose}
+      titulo={`Documentos de ${empleado.nombre}`}
+    >
+      {/* ─── Subir nuevo documento ──────────────────────────── */}
       <form onSubmit={handleUpload} className="upload-form">
-        <input
-          type="file"
-          accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          onChange={e => setFile(e.target.files[0])}
-        />
+        <div className="upload-left">
+          <input
+            type="file"
+            accept=".pdf, .doc, .docx"
+            ref={fileInputRef}
+            hidden
+            onChange={handleFileSelect}
+          />
+          <label
+            className="doc-btn-file"
+            onClick={() => fileInputRef.current.click()}
+          >
+            Seleccionar Archivo
+          </label>
+          {selectedFile && (
+            <span className="doc-file-name">{selectedFile.name}</span>
+          )}
+        </div>
         <button
           type="submit"
           className="btn-red"
-          disabled={subiendo || !file}
+          disabled={!selectedFile || subiendo}
         >
           {subiendo ? 'Subiendo...' : 'Subir Archivo'}
         </button>
       </form>
 
-      {/* ─── Lista de documentos existentes ──────────────────────── */}
+      {/* ─── Lista de documentos existentes ────────────────── */}
       <div className="doc-list-wrapper">
         {cargandoDocs ? (
-          <p>Cargando documentos...</p>
+          <p>Cargando documentos…</p>
         ) : docs.length === 0 ? (
           <p className="no-data">No hay documentos.</p>
         ) : (
@@ -127,20 +136,19 @@ export default function EditarDocsModal({ empleado, onClose, mostrarNotificacion
               {docs.map(d => (
                 <tr key={d.id}>
                   <td>{d.file_name}</td>
-                  <td>{d.fecha_subida}</td>
-                  <td>
+                  <td>{new Date(d.fecha_subida).toLocaleDateString()}</td>
+                  <td className="doc-col-actions">
                     <button
-                      className="btn-outline-red"
+                      title="Descargar"
                       onClick={() => descargarDocumento(d.id)}
                     >
-                      Descargar
+                      <FiDownload />
                     </button>
-                    {' '}
                     <button
-                      className="btn-outline-red"
+                      title="Eliminar"
                       onClick={() => eliminarDocumento(d.id)}
                     >
-                      Eliminar
+                      <FiTrash2 />
                     </button>
                   </td>
                 </tr>
@@ -149,6 +157,6 @@ export default function EditarDocsModal({ empleado, onClose, mostrarNotificacion
           </table>
         )}
       </div>
-    </ModalGenérico>
+    </ModalGenerico>
   );
 }

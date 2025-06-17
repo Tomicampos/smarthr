@@ -1,0 +1,12 @@
+/* src/components/EmpleadoForm.css */
+
+/* Cada campo agrupado gana espacio debajo */
+.form-emp .form-group {
+  margin-bottom: 1rem;
+}
+
+/* El label separa bien del input */
+.form-emp .form-group label {
+  display: block;       /* ya lo haces, pero por si acaso */
+  margin-bottom: 0.5rem;
+}

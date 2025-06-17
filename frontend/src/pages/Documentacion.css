@@ -1,4 +1,16 @@
-/* Contenedor principal */
+/* ------------------------------------------------------------
+   GLOBAL: deshabilitar scroll en toda la página
+------------------------------------------------------------ */
+html, body {
+  height: auto;
+  overflow: visible !important;
+  margin: 0;
+  padding: 0;
+}
+
+/* ------------------------------------------------------------
+   Contenedor principal: todo fluye verticalmente sin scroll
+------------------------------------------------------------ */
 .doc-container {
   padding: 1rem;
   background: #f9fafb;
@@ -7,18 +19,26 @@
   gap: 1rem;
 }
 
-/* Card genérica */
+/* ------------------------------------------------------------
+   Card genérica: sin restricciones de altura ni scroll interno
+------------------------------------------------------------ */
 .card {
-  background: #fff;
-  border-radius: 8px;
+  background: #fff; 
   padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-radius: 16px;  
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.04),
+    0 6px 12px rgba(0,0,0,0.08),    
+    0 12px 24px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  /* eliminamos cualquier flex:1 o altura fija */
 }
 
-/* Título dentro de la card */
+/* ------------------------------------------------------------
+   Título dentro de la card
+------------------------------------------------------------ */
 .card-title {
   font-size: 1.4rem;
   color: #ef4444;
@@ -26,59 +46,57 @@
   margin: 0;
 }
 
-/* Formulario de upload */
+/* ------------------------------------------------------------
+   Formulario de upload: selector + botón
+------------------------------------------------------------ */
 .doc-upload-form {
   display: flex;
   align-items: center;
+  justify-content: space-between; /* empuja el submit a la derecha */
   gap: 1rem;
+  margin-bottom: 1rem;
 }
+
+/* grupo izquierdo: selector + nombre de archivo */
+.doc-upload-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* input file oculto, usamos label estilizado */
 .doc-upload-form input[type="file"] {
-  flex: 1;
-}
-.doc-upload-form .btn-red {
-  flex-shrink: 0;
+  display: none;
 }
 
-/* Wrapper con scroll interno para tablas */
-.doc-table-wrapper {
-  flex: 1;
-  overflow: auto;
+/* botón “Seleccionar PDF” */
+.doc-btn-file {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 0.85rem;       /* un poco más pequeño */
+  color: #9CA3AF;           /* gris medio */
+}
+.doc-btn-file:hover {
+  background: #f3f4f6;
 }
 
-/* Tabla */
-.doc-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-.doc-table th,
-.doc-table td {
-  padding: 0.75rem 1rem;
-  font-size: 0.9rem;
-  text-align: left;
-}
-.doc-table thead {
-  background: #fff1f1;
-}
-.doc-table th {
-  color: #b91c1c;
-  font-weight: 600;
-}
-.doc-table tbody tr:nth-child(even) {
-  background: #ffffff;
-}
-.doc-table tbody tr:nth-child(odd) {
-  background: #fbfbfb;
-}
-.doc-table tbody tr:hover {
-  background: #f2f2f2;
-}
-/* Filas vacías */
-.empty-row td {
-  background: transparent;
+/* nombre del archivo elegido */
+.doc-file-name {
+  font-size: 0.85rem;
+  color: #374151;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Botones */
+/* ------------------------------------------------------------
+   Botón rojo “Subir PDF masivo”
+------------------------------------------------------------ */
 .btn-red {
   background: #dc2626;
   color: #fff;
@@ -91,26 +109,62 @@
 .btn-red:hover {
   background: #b91c1c;
 }
-.btn-outline-red {
-  background: transparent;
-  color: #dc2626;
-  border: 1px solid #dc2626;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-outline-red:hover {
-  background: #dc2626;
-  color: #fff;
+
+/* ------------------------------------------------------------
+   Tabla de recibos: sin scroll, fluye en altura
+------------------------------------------------------------ */
+.doc-table-wrapper {
+  /* eliminamos overflow y flex:1 */
+  overflow: visible !important;
+  height: auto !important;
 }
 
-/* Paginación */
+/* tabla */
+.doc-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.doc-table th,
+.doc-table td {
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  text-align: center;
+}
+.doc-table thead {
+  background: #fff1f1;
+}
+.doc-table th {
+  color: #ef4444;
+  font-weight: 600;
+}
+.doc-table tbody tr:nth-child(even) { background: #ffffff; }
+.doc-table tbody tr:nth-child(odd)  { background: #fbfbfb;   }
+.doc-table tbody tr:hover            { background: #f2f2f2;   }
+.empty-row td { background: transparent; }
+
+/* acciones en cada fila */
+.doc-col-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  margin: 0 0.25rem;
+  color: #374151;
+  transition: color 0.2s;
+}
+.doc-col-actions button:hover {
+  color: #dc2626;
+}
+
+/* ------------------------------------------------------------
+   Paginación: sin scroll, siempre visible debajo de la tabla
+------------------------------------------------------------ */
 .pagination {
   display: flex;
   justify-content: center;
   gap: 0.5rem;
-  margin-top: auto; /* para que siempre quede al pie de la card */
+  margin-top: 1rem;
 }
 .pagination button {
   background: none;
@@ -119,10 +173,11 @@
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 .pagination button:hover:not(:disabled) {
   background: #ef4444;
+  color: #fff;
 }
 .pagination button:disabled {
   color: #ccc;
@@ -134,18 +189,8 @@
   font-weight: 500;
 }
 
-/* Alerta flotante */
-.alert {
-  position: fixed;
-  top: 4rem;
-  right: 1rem;
-  background: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  border-radius: 0.5rem;
-  padding: 1rem;
-  z-index: 1000;
-}
-.alert-content { display: flex; align-items: center; }
-.alert-title { margin: 0; font-size: 1rem; color: #1f2937; }
+/* ------------------------------------------------------------
+   Toast (alertas) — sin scroll, posicion fija
+------------------------------------------------------------ */
 .alert-success { border-left: 4px solid #10b981; }
 .alert-error   { border-left: 4px solid #ef4444; }

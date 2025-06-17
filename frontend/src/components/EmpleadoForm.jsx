@@ -1,7 +1,8 @@
 // src/components/EmpleadoForm.jsx
 import React, { useState, useEffect } from "react";
 import API from "../api";
-import "./ModalGenerico.css";
+import "./ModalGenerico.css";  // sigue cargando estilos generales de modal
+import "./EmpleadoForm.css";   // agrega tus ajustes de espacio
 
 export default function EmpleadoForm({ mode, user, onSuccess }) {
   /**
@@ -100,7 +101,7 @@ export default function EmpleadoForm({ mode, user, onSuccess }) {
       {/* ID sólo editable en modo "create" */}
       {mode === "create" && (
         <div className="form-group">
-          <label>ID:</label>
+          <label>DNI:</label>
           <input
             type="number"
             value={id}
@@ -151,19 +152,20 @@ export default function EmpleadoForm({ mode, user, onSuccess }) {
           <input type="text" value={rol} readOnly />
         ) : (
           <select value={rol} onChange={(e) => setRol(e.target.value)}>
-            <option value="empleado">Empleado</option>
+            <option value="empleado">Usuario</option>
             <option value="admin">Administrador</option>
           </select>
         )}
       </div>
 
-      <div className="form-buttons">
-        {mode !== "view" && (
-          <button type="submit" className="btn-submit">
+      {/* Reemplazamos form-buttons por modal-footer */}
+      {mode !== "view" && (
+        <div className="modal-footer">
+          <button type="submit" className="btn-primary">
             {mode === "create" ? "Crear" : "Guardar"}
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </form>
   );
 }

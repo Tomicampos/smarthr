@@ -1,21 +1,20 @@
-// src/pages/Empleados.jsx
 import React, { useState, useEffect, useRef } from "react";
 import API from "../api";
 import EmpleadoForm from "../components/EmpleadoForm.jsx";
-import ModalGenérico from "../components/ModalGenerico.jsx";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import ModalGenerico from "../components/ModalGenerico.jsx";
+import { useToast } from "../components/ToastContext";
+import { FiChevronLeft, FiChevronRight, FiEye, FiEdit2, FiTrash2 } from "react-icons/fi";
 import "./Empleados.css";
 
 const PAGE_SIZE = 10;
 
 export default function Empleados() {
+  const toast = useToast();
   const [users, setUsers] = useState([]);
   const [mode, setMode] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [notification, setNotification] = useState(null);
   const fileInputRef = useRef();
-
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -27,10 +26,8 @@ export default function Empleados() {
       const { data } = await API.get("/users");
       setUsers(data);
       setCurrentPage(1);
-    } catch (err) {
-      console.error(err);
-      setNotification({ type: "error", text: "No se pudo cargar usuarios." });
-      setTimeout(() => setNotification(null), 5000);
+    } catch {
+      toast.error("No se pudo cargar usuarios.");
     }
   };
 
@@ -45,15 +42,27 @@ export default function Empleados() {
     setCurrentUser(null);
   };
   const onSaved = () => {
+    // mensaje según modo
+    if (mode === "create") toast.success("Empleado creado correctamente");
+    else if (mode === "edit") toast.success("Empleado actualizado correctamente");
     closeForm();
     cargarUsuarios();
   };
 
+  const eliminarUsuario = async (user) => {
+    if (!window.confirm(`¿Eliminar al empleado "${user.nombre}"?`)) return;
+    try {
+      await API.delete(`/users/${user.id}`);
+      toast.success("Empleado eliminado");
+      cargarUsuarios();
+    } catch {
+      toast.error("No se pudo eliminar el empleado");
+    }
+  };
+
   const handleExport = async () => {
     try {
-      const response = await API.get("/users/export", {
-        responseType: "blob",
-      });
+      const response = await API.get("/users/export", { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -62,112 +71,107 @@ export default function Empleados() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Error exportando CSV:", err);
-      setNotification({ type: "error", text: "Error al exportar CSV" });
-      setTimeout(() => setNotification(null), 5000);
+      toast.success("CSV exportado");
+    } catch {
+      toast.error("Error al exportar CSV");
     }
   };
 
   const handleImportClick = () => fileInputRef.current.click();
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("file", file);
-    try {
-      const { data: result } = await API.post("/users/import", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setNotification({
-        type: result.errors.length ? "error" : "success",
-        text: result.errors.length
-          ? `Errores: ${result.errors.length}`
-          : `Importados: ${result.inserted.length}`,
-      });
-      setTimeout(() => setNotification(null), 5000);
-      cargarUsuarios();
-    } catch (err) {
-      console.error("Error importando:", err);
-      setNotification({ type: "error", text: "Error al importar CSV" });
-      setTimeout(() => setNotification(null), 5000);
+const handleFileChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const { data: result } = await API.post("/users/import", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    if (result.errors && result.errors.length > 0) {
+      toast.error(`Hubo ${result.errors.length} errores durante la importación.`);
+    } else {
+      toast.success("Archivo importado correctamente");
     }
+
+    // 1) Recargamos el listado
+    await cargarUsuarios();
+    // 2) Volvemos a la primera página
+    setCurrentPage(1);
+    // 3) Limpiamos el input para poder reimportar el mismo archivo si hace falta
+    e.target.value = null;
+  } catch {
+    toast.error("Error al importar CSV");
+  }
   };
 
   // Paginación
   const totalItems = users.length;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
-  const pages = [];
-  for (let i = 1; i <= totalPages; i++) pages.push(i);
-
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
   const start = (currentPage - 1) * PAGE_SIZE;
   const pagedUsers = users.slice(start, start + PAGE_SIZE);
 
   return (
     <>
-      {notification && (
-        <div className={`emp-notif ${notification.type}`} role="alert">
-          {notification.text}
-        </div>
-      )}
-
       <div className="emp-container">
         <div className="emp-header">
           <h1 className="emp-title">Gestión de Empleados</h1>
           <div className="emp-actions">
-            <button className="emp-btn-export" onClick={handleExport}>
-              📥 Exportar CSV
-            </button>
-            <button className="emp-btn-import" onClick={handleImportClick}>
-              📤 Importar CSV
-            </button>
-            <button className="emp-btn-new" onClick={() => openForm("create")}>
-              + Nuevo empleado
-            </button>
+            <button className="emp-btn" onClick={handleExport}>📤 Exportar CSV</button>
+            <button className="emp-btn" onClick={handleImportClick}>📥 Importar CSV</button>
+            <button className="emp-btn" onClick={() => openForm("create")}>＋ Agregar Empleado</button>
+            <input
+              type="file" accept=".csv"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
           </div>
-          <input
-            type="file"
-            accept=".csv"
-            ref={fileInputRef}
-            style={{ display: "none" }}
-            onChange={handleFileChange}
-          />
         </div>
 
         <div className="emp-table-wrapper">
           <table className="emp-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Nombre</th>
+                <th>DNI</th>
+                <th>Nombre y Apellido</th>
                 <th>Email</th>
                 <th>Rol</th>
-                <th className="emp-col-actions"></th>
+                <th className="emp-col-actions">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {pagedUsers.map((u, idx) => (
-                <tr
-                  key={u.id}
-                  className={idx % 2 === 0 ? "emp-row-even" : "emp-row-odd"}
-                >
+                <tr key={u.id} className={idx % 2 === 0 ? "emp-row-even" : "emp-row-odd"}>
                   <td>{u.id}</td>
                   <td>{u.nombre}</td>
                   <td>{u.email}</td>
                   <td>{u.rol}</td>
                   <td className="emp-col-actions">
                     <button
-                      className="emp-btn-view"
+                      className="emp-btn-action"
+                      title="Ver"
                       onClick={() => openForm("view", u)}
                     >
-                      Ver
+                      <FiEye />
                     </button>
                     <button
-                      className="emp-btn-edit"
+                      className="emp-btn-action"
+                      title="Editar"
                       onClick={() => openForm("edit", u)}
                     >
-                      Editar
+                      <FiEdit2 />
+                    </button>
+                    <button
+                      className="emp-btn-action"
+                      title="Eliminar"
+                      onClick={() => eliminarUsuario(u)}
+                    >
+                      <FiTrash2 />
                     </button>
                   </td>
                 </tr>
@@ -176,7 +180,6 @@ export default function Empleados() {
           </table>
         </div>
 
-        {/* Paginación */}
         {totalPages > 1 && (
           <div className="pagination">
             <button
@@ -186,7 +189,7 @@ export default function Empleados() {
               <FiChevronLeft /> Anterior
             </button>
             <ul>
-              {pages.map((p) => (
+              {pages.map(p => (
                 <li key={p}>
                   <button
                     className={p === currentPage ? "active" : ""}
@@ -207,9 +210,19 @@ export default function Empleados() {
         )}
 
         {modalOpen && (
-          <ModalGenérico abierto onClose={closeForm} título={mode === "create" ? "Crear empleado" : mode === "edit" ? "Editar empleado" : "Ver empleado"}>
+          <ModalGenerico
+            abierto={modalOpen}
+            onClose={closeForm}
+            titulo={
+              mode === "create"
+                ? "Crear empleado"
+                : mode === "edit"
+                ? "Editar empleado"
+                : "Ver empleado"
+            }
+          >
             <EmpleadoForm mode={mode} user={currentUser} onSuccess={onSaved} />
-          </ModalGenérico>
+          </ModalGenerico>
         )}
       </div>
     </>

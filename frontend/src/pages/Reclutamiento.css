@@ -13,9 +13,12 @@
 /* Card principal */
 .rec-card {
   background: #fff;
-  border-radius: 8px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-radius: 16px;  
+   box-shadow:
+    0 2px 4px rgba(0,0,0,0.04),
+    0 6px 12px rgba(0,0,0,0.08),    
+    0 12px 24px rgba(0,0,0,0.15);
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -121,9 +124,9 @@
 
 .rec-table th {
   padding: 0.75rem 1rem;
-  text-align: left;
+  text-align: center;
   font-weight: 600;
-  color: #b91c1c;
+  color: #ef4444;
   font-size: 0.875rem;
   white-space: nowrap;
 }
@@ -133,6 +136,7 @@
   color: #444444;
   font-size: 0.9rem;
   white-space: nowrap;
+  text-align: center;
 }
 
 /* Filas alternadas */
@@ -266,7 +270,7 @@
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  margin: 1rem 0;
+  margin: 0,9rem 0 !important;
 }
 .pagination button {
   display: flex;

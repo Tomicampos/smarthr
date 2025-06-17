@@ -12,8 +12,11 @@
 /* 2) La card blanca también ocupa todo ese espacio */
 .agenda-card {
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-radius: 16px;  
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.04),
+    0 6px 12px rgba(0,0,0,0.08),    
+    0 12px 24px rgba(0,0,0,0.15);
   flex: 1;               /* ocupa todo el alto de .agenda-container */
   display: flex;
   flex-direction: column;

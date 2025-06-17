@@ -4,12 +4,13 @@
   gap: 1.5rem;
   padding: 1.5rem;
 }
-
 .notif-card {
   background: #fff;
   border-radius: 8px;
   padding: 1rem;
-  box-shadow: 5px 5px 10px rgba(0,0,0,0.09);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
 }
 
 .notif-card h3 {
@@ -53,12 +54,15 @@
 .notif-table th,
 .notif-table td {
   padding: 0.75rem 1rem;
-  text-align: left;
+  text-align: center;
   border-bottom: 1px solid #f3f4f6;
 }
 
 .notif-table thead {
   background: #f9fafb;
+}
+.notif-card .notif-table thead th {
+  color: #ef4444;
 }
 
 .btn-outline-red {
@@ -76,14 +80,31 @@
 }
 
 /* Paginación para NotificationList */
+
+
 .notif-pagination {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 1rem;
   padding: 1rem 0;
+  margin-top: 1.5rem;
 }
 
+/* Estilizamos la lista de páginas como fila horizontal */
+.notif-pagination ul {
+  list-style: none;
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.notif-pagination ul li {
+  margin: 0;
+}
+
+/* Botones de página */
 .notif-pagination button {
   background: #fff;
   border: 1px solid #dc2626;
@@ -105,7 +126,8 @@
   color: #fff;
 }
 
-.notif-pagination span {
-  font-size: 0.9rem;
-  color: #374151;
+/* Página activa */
+.notif-pagination button.active {
+  background: #dc2626;
+  color: #fff;
 }

@@ -54,20 +54,47 @@
   
   /* Formulario de subida */
   .upload-form {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: nowrap;        /* <-- evitamos que los items salten de línea */
+  margin-bottom: 1rem;
+}
+
+/* Contenedor izquierdo: label + nombre de archivo */
+.upload-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: nowrap;       /* <-- aquí también forzamos sin wrap */
+}
   .upload-form input[type="file"] {
     flex: 1;
     border: 1px solid #ccc;
     padding: 0.4rem;
     border-radius: 4px;
   }
+/* Botón “Seleccionar Archivo” */
+.doc-btn-file {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 0.85rem;
+  color: #9CA3AF;
+  white-space: nowrap;     /* <-- evitamos que el texto se corte */
+}
+
   .upload-form .btn-red {
     padding: 0.5rem 1rem;
   }
+
+  .btn-red:hover:not(:disabled) {
+  background: #b91c1c;
+}
   
   /* Lista de documentos dentro del modal */
   .doc-list-wrapper {
@@ -78,6 +105,7 @@
     width: 100%;
     border-collapse: collapse;
     margin-top: 0.5rem;
+    text-align: center;
   }
   .doc-list-table th,
   .doc-list-table td {
@@ -89,11 +117,14 @@
     background: #ffe5e5;
   }
   .doc-list-table th {
-    color: #b91c1c;
+    color: #ef4444;
     font-weight: 600;
   }
   .doc-list-table tbody tr:hover {
     background: #f9f9f9;
+  }
+  .doc-col-actions {
+    text-align: center;
   }
   
   /* Pie del modal */

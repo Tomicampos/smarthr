@@ -120,17 +120,31 @@ app.put('/api/users/:id', async (req, res) => {
 
 // Borrar usuario
 app.delete('/api/users/:id', async (req, res) => {
+  const uid = Number(req.params.id);
   try {
+    // 1) Eliminar destinatarios de notificaciones
     await pool.query(
-      'DELETE FROM users WHERE id=?',
-      [Number(req.params.id)]
+      'DELETE FROM notificaciones_destinatarios WHERE empleado_id = ?',
+      [uid]
     );
+    // 2) (Opcional) Si tienes otras tablas con FK a users, borrarlas también aquí
+    //    await pool.query('DELETE FROM otra_tabla WHERE user_id = ?', [uid]);
+
+    // 3) Finalmente, borrar el usuario
+    const [result] = await pool.query(
+      'DELETE FROM users WHERE id = ?',
+      [uid]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
     res.status(204).end();
   } catch (err) {
-    console.error('Error borrando user:', err);
-    res.status(500).json({ error: 'Error borrando user' });
+    console.error('Error borrando user y sus dependencias:', err);
+    res.status(500).json({ error: 'No se pudo eliminar usuario' });
   }
 });
+
 
 // ─── EXPORTAR / IMPORTAR CSV ───────────────────────────────────
 
@@ -595,6 +609,62 @@ app.post(
   }
 );
 
+// 8) Eliminar postulante
+// DELETE /api/reclutamiento/:pid/postulantes/:uid
+app.delete(
+  '/api/reclutamiento/:pid/postulantes/:uid',
+  async (req, res) => {
+    const pid = Number(req.params.pid);
+    const uid = Number(req.params.uid);
+
+    try {
+      // 1) Borra el postulante
+      await pool.query(
+        'DELETE FROM postulantes WHERE id = ? AND proceso_id = ?',
+        [uid, pid]
+      );
+
+      // 2) Recalcula el máximo etapa_actual de los postulantes restantes
+      const [[{ maxEtapa }]] = await pool.query(
+        `SELECT COALESCE(MAX(etapa_actual), 0) AS maxEtapa
+           FROM postulantes
+          WHERE proceso_id = ?`,
+        [pid]
+      );
+
+      // 3) Decide la nueva etapa y estado del proceso
+      // Número de etapas definidas:
+      const TOTAL_ETAPAS = 6;
+
+      let nuevaEtapa = maxEtapa < 1 ? 1 : maxEtapa;
+      let nuevoEstado = 'En curso';
+      let fechaFinClause = '';
+
+      if (maxEtapa === TOTAL_ETAPAS) {
+        nuevoEstado = 'Finalizado';
+        // solo fijar fecha_fin si aún no existe
+        fechaFinClause = ', fecha_fin = COALESCE(fecha_fin, NOW())';
+      }
+
+      // 4) Actualiza el proceso
+      await pool.query(
+        `UPDATE reclutamiento
+            SET etapa_actual = ?, estado = ?${fechaFinClause}
+          WHERE id = ?`,
+        [nuevaEtapa, nuevoEstado, pid]
+      );
+
+      return res.sendStatus(204);
+    } catch (err) {
+      console.error('Error eliminando postulante:', err);
+      return res.status(500).json({ error: 'Error interno al eliminar postulante' });
+    }
+  }
+);
+
+
+
+
 app.post(
   '/api/reclutamiento/:id/postulantes',
   uploadPost.single('cv'),
@@ -743,6 +813,33 @@ app.post('/api/notificaciones', async (req, res) => {
     return res.status(500).json({ error: 'Error enviando notificaciones' });
   }
 });
+
+// ─── Ruta para eliminar una notificación ────────────────────────
+app.delete('/api/notificaciones/:id', async (req, res) => {
+  const id = Number(req.params.id);
+
+  try {
+    // 1) Borra primero los destinatarios (por la FK)
+    await pool.query(
+      'DELETE FROM notificaciones_destinatarios WHERE notificacion_id = ?',
+      [id]
+    );
+    // 2) Borra la notificación
+    const [result] = await pool.query(
+      'DELETE FROM notificaciones WHERE id = ?',
+      [id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Notificación no encontrada' });
+    }
+    // 3) Devuelve 204 No Content
+    res.status(204).end();
+  } catch (err) {
+    console.error('Error borrando notificación:', err);
+    res.status(500).json({ error: 'Error interno al eliminar notificación' });
+  }
+});
+
 
 // ─── GOOGLE CALENDAR (ya configurado) ──────────────────────────────
 const oAuth2Client = new google.auth.OAuth2(

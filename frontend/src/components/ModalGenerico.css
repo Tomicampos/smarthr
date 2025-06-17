@@ -40,7 +40,7 @@
   .modal-title {
     margin: 0;
     font-size: 1.25rem;
-    color: black; 
+    color: white !important; 
     font-weight: 600;
     margin-top: 1rem;
   }
@@ -70,10 +70,11 @@
   .modal-body label {
     font-size: 0.875rem;
     color: #4b5563; /* gris medio */
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.05rem;
     display: block;
   }
-
+   
+ 
   
   .modal-body input,
   .modal-body select,
@@ -172,3 +173,26 @@
     max-width: calc(100% - 1rem);
   }
 }
+
+.modal-footer {
+  background: #ffffff !important;
+  padding: 1rem 1.5rem;          /* igual que el header, ajusta al gusto */
+  display: flex;
+  justify-content: flex-end;
+  border-top: none !important;                 
+}
+
+.modal-footer .btn-primary {
+  /* elimina cualquier align-self previo */
+  align-self: auto !important;
+  /* opcional: si quieres un pequeño espacio a la izquierda */
+  margin-left: 0.5rem;
+}
+
+/* Elimina flechas en Chrome, Edge, Safari */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+

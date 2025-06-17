@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import { AnimatePresence, motion } from 'framer-motion';
 import './MainLayout.css';
 
 const titles = {
@@ -30,7 +31,17 @@ export default function MainLayout() {
 
         <main className="main-content">
           <div className="content-scroll">
-            <Outlet />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={pathname}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.9 }}
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
           </div>
         </main>
       </div>
