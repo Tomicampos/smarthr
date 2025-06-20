@@ -119,11 +119,11 @@ const handleFileChange = async (e) => {
     <>
       <div className="emp-container">
         <div className="emp-header">
-          <h1 className="emp-title">Gestión de Empleados</h1>
+          <h1 className="emp-title">Gestión de Usuarios</h1>
           <div className="emp-actions">
             <button className="emp-btn" onClick={handleExport}>📤 Exportar CSV</button>
             <button className="emp-btn" onClick={handleImportClick}>📥 Importar CSV</button>
-            <button className="emp-btn" onClick={() => openForm("create")}>＋ Agregar Empleado</button>
+            <button className="emp-btn" onClick={() => openForm("create")}>＋ Agregar Usuario</button>
             <input
               type="file" accept=".csv"
               ref={fileInputRef}

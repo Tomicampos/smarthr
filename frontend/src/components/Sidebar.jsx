@@ -54,7 +54,7 @@ export default function Sidebar() {
   const menuItems = [
     { to: '/home', label: 'Inicio', icon: <AiFillHome /> },
     { to: '/reclutamiento', label: 'Reclutamiento', icon: <AiOutlineUserAdd /> },
-    { to: '/empleados', label: 'Empleados', icon: <FaUsers /> },
+    { to: '/empleados', label: 'Usuarios', icon: <FaUsers /> },
     { to: '/notificaciones', label: 'Notificaciones', icon: <FaBell /> },
     { to: '/agenda', label: 'Agenda', icon: <FaCalendarAlt /> },
     { to: '/documentacion', label: 'Documentación', icon: <FaBook /> },
