@@ -1,11 +1,24 @@
 // src/components/Cronograma.jsx
 import React, { useEffect, useState } from 'react';
 import { FiChevronRight } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import './Cronograma.css';
-import { useNavigate } from 'react-router-dom';
 
 const MAX_EVENTOS = 7;
+
+// Helper para extraer rol del JWT
+function getUserRole() {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  try {
+    const b = token.split('.')[1];
+    const payload = JSON.parse(atob(b.replace(/-/g,'+').replace(/_/g,'/')));
+    return (payload.rol || payload.role || '').toLowerCase();
+  } catch {
+    return null;
+  }
+}
 
 export default function Cronograma() {
   const [sections, setSections] = useState([]);
@@ -14,11 +27,9 @@ export default function Cronograma() {
   useEffect(() => {
     (async () => {
       try {
-        // 1) Traemos todos los procesos de agenda
         const res = await API.get('/agenda');
         const eventos = Array.isArray(res.data) ? res.data : [];
 
-        // 2) Convertimos a lista plana con fecha y hora
         const planos = eventos.map(evt => {
           const start = new Date(evt.start.dateTime || evt.start.date);
           const dateKey = start.toLocaleDateString('es-AR', {
@@ -35,10 +46,8 @@ export default function Cronograma() {
           };
         });
 
-        // 3) Tomamos solo los primeros MAX_EVENTOS
         const top = planos.slice(0, MAX_EVENTOS);
 
-        // 4) Reagrupamos por fecha
         const grouped = top.reduce((acc, e) => {
           if (!acc[e.date]) acc[e.date] = [];
           acc[e.date].push({
@@ -49,7 +58,6 @@ export default function Cronograma() {
           return acc;
         }, {});
 
-        // 5) Pasamos a array de secciones
         const secs = Object.entries(grouped).map(([date, items]) => ({
           date, items
         }));
@@ -61,6 +69,15 @@ export default function Cronograma() {
       }
     })();
   }, []);
+
+  const handleVerMas = () => {
+    const role = getUserRole();
+    if (role === 'admin') {
+      navigate('/agenda');
+    } else {
+      navigate('/mi-agenda');
+    }
+  };
 
   return (
     <div className="cronograma-card">
@@ -88,7 +105,7 @@ export default function Cronograma() {
       <div className="cronograma-footer">
         <button
           className="view-more"
-          onClick={() => navigate('/agenda')}
+          onClick={handleVerMas}
         >
           Ver Más <FiChevronRight />
         </button>

@@ -31,7 +31,7 @@
 /* Ítem de menú */
 .menu-item {
   display: flex;
-  align-items: center;       /* <-- nos aseguramos aquí */
+  align-items: center;
   gap: 1rem;
   padding: 0.75rem 1rem;
   color: #374151;
@@ -40,34 +40,25 @@
   transition: background 0.2s, color 0.2s;
   line-height: 1;
 }
-
-/* Contenedor del icono */
 .menu-item .icon {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-
-/* SVG: tamaño y vertical-align */
 .menu-item .icon svg {
   display: block;
-  width: 1.25em;             /* un poco más grande si quieres */
+  width: 1.25em;
   height: 1.25em;
-  vertical-align: middle;    /* asegura que se alinee al medio */
 }
-
-/* Texto del label */
 .menu-item .label {
   display: inline-flex;
-  align-items: center;       /* <-- Y aquí también */
+  align-items: center;
   margin: 0;
   font-size: 0.95rem;
-  line-height: 1;            /* asegura que no haya salto */
+  line-height: 1;
   transition: color 0.3s;
 }
-
-/* Hover y activo */
 .menu-item:hover,
 .menu-item.active {
   background: #ef4444;
@@ -81,7 +72,6 @@
 .menu-item.active .icon svg {
   color: #fff;
 }
-
 
 /* Bloque footer: pushed to bottom */
 .sidebar-footer {
@@ -103,10 +93,9 @@
   flex-direction: column;
   gap: 0.75rem;
 }
-
 .support-item {
   display: flex;
-  align-items: center;       /* <-- centrar texto */
+  align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 0.75rem;
   background: none;
@@ -117,31 +106,23 @@
   border-radius: 12px;
   transition: background 0.2s, color 0.2s;
 }
-
-/* Ícono soporte */
 .support-item .icon {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-
-/* SVG soporte */
 .support-item .icon svg {
   display: block;
-  width: 1.25em;             /* a juego con el menú */
+  width: 1.25em;
   height: 1.25em;
-  vertical-align: middle;
 }
-
-/* Texto soporte */
 .support-item .label {
   display: inline-flex;
-  align-items: center;       /* <-- y aquí también */
+  align-items: center;
   margin: 0;
   transition: color 0.2s;
 }
-
 .support-item:hover {
   background: #f9fafb;
   color: #374151;
@@ -171,6 +152,22 @@
   font-weight: bold;
   font-size: 1rem;
   flex-shrink: 0;
+  overflow: hidden;           /* importante */
+}
+
+.sidebar-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Si la avatar contiene una <img>, la ajustamos */
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 /* Info de usuario */
@@ -179,13 +176,11 @@
   flex-direction: column;
   line-height: 1;
 }
-
 .user-name {
   font-size: 0.9rem;
   color: #111827;
   font-weight: 500;
 }
-
 .user-role {
   font-size: 0.75rem;
   color: #6b7280;

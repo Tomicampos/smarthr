@@ -7,6 +7,7 @@ const jwt                    = require('jsonwebtoken');
 const { google }             = require('googleapis');
 const multer                 = require('multer');
 const fs                     = require('fs');
+const path                   = require('path');
 const pdfParse               = require('pdf-parse');
 const { PDFDocument }        = require('pdf-lib');
 const csvParser              = require('csv-parser');
@@ -18,6 +19,7 @@ const nodemailer             = require('nodemailer');
 
 // ─── Crear app Y configurar body parsers ────────────────────────
 const app = express();
+app.use('/uploads/avatars', express.static('uploads/avatars'));
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -27,11 +29,46 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Multer genérico y específicos
-const upload = multer();          // para multipart/form-data sin destino
+const upload = multer({ storage: multer.memoryStorage() });          // para multipart/form-data sin destino
 const uploadUsers       = multer({ dest: 'tmp_users/' });
 const uploadDocs        = multer({ dest: 'tmp_docs/' });
 const uploadEmpleadoDoc = multer({ dest: 'tmp_emp_docs/' });
 const uploadPost        = multer();
+
+
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'uploads/avatars';
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    // ponemos userId + timestamp + extensión
+    const ext  = path.extname(file.originalname);
+    cb(null, `${req.params.id}-${Date.now()}${ext}`);
+  }
+});
+
+const uploadAvatar = multer({ storage: avatarStorage });
+
+app.get('/api/users/:id/avatar', async (req, res) => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) return res.status(400).end();
+  try {
+    const [[row]] = await pool.query(
+      `SELECT avatar, avatar_mimetype
+         FROM users
+        WHERE id = ?`,
+      [id]
+    );
+    if (!row || !row.avatar) return res.status(404).end();
+    res.set('Content-Type', row.avatar_mimetype || 'image/jpeg');
+    res.send(row.avatar);
+  } catch (err) {
+    console.error('Error al servir avatar:', err);
+    res.status(500).end();
+  }
+});
 
 // ─── AUTH MIDDLEWARE ────────────────────────────────────────────
 function authMiddleware(req, res, next) {
@@ -54,7 +91,16 @@ app.post('/login', async (req, res) => {
     const u = rows[0];
     const ok = await bcrypt.compare(password, u.password);
     if (!ok) return res.status(400).json({ message: 'Contraseña incorrecta' });
-    const token = jwt.sign({ id: u.id, email: u.email, rol: u.rol }, JWT_SECRET, { expiresIn: '2h' });
+    const token = jwt.sign(
+  { 
+    id: u.id,
+    email: u.email,
+    rol: u.rol,
+    nombre: u.nombre    // ← lo clave, metemos el 'nombre' de la BD
+  },
+  JWT_SECRET,
+  { expiresIn: '2h' }
+);
     res.json({ token });
   } catch (err) {
     console.error('Error en /login:', err);
@@ -100,21 +146,47 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-// Actualizar usuario
+// Actualizar usuario (admin o perfil propio)
 app.put('/api/users/:id', async (req, res) => {
-  const { nombre, email, rol } = req.body;
-  if (!['empleado','admin'].includes(rol)) {
-    return res.status(400).json({ message: 'Rol inválido' });
+  const id = Number(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ message: 'ID inválido' });
+
+  const { nombre, email, password, rol } = req.body;
+  if (!nombre || !email) {
+    return res.status(400).json({ message: 'Faltan campos: nombre y/o email' });
   }
+
+  // Si vienen rol, validamos y lo actualizamos
+  const fields = ['nombre = ?', 'email = ?'];
+  const params = [nombre, email];
+
+  if (password) {
+    fields.push('password = ?');
+    params.push(password);
+  }
+
+  if (rol !== undefined) {
+    // solo admin debería enviar este campo, pero si viene, lo validamos
+    if (!['empleado', 'admin'].includes(rol)) {
+      return res.status(400).json({ message: 'Rol inválido' });
+    }
+    fields.push('rol = ?');
+    params.push(rol);
+  }
+
+  params.push(id);
+
   try {
     await pool.query(
-      'UPDATE users SET nombre=?,email=?,rol=? WHERE id=?',
-      [nombre, email, rol, Number(req.params.id)]
+      `UPDATE users
+          SET ${fields.join(', ')}
+        WHERE id = ?`,
+      params
     );
-    res.json({ id: Number(req.params.id), nombre, email, rol });
+    return res.json({ message: 'Usuario actualizado' });
   } catch (err) {
     console.error('Error actualizando usuario:', err);
-    res.status(500).json({ error: 'Error actualizando user' });
+    return res.status(500).json({ error: 'Error actualizando usuario' });
   }
 });
 
@@ -144,8 +216,86 @@ app.delete('/api/users/:id', async (req, res) => {
     res.status(500).json({ error: 'No se pudo eliminar usuario' });
   }
 });
+// ---------------------------------------------------------------
+// RUTAS DE USUARIO / MI PERFIL
+// ---------------------------------------------------------------
 
+// GET datos de usuario (incluye URL dinámica de avatar)
+app.get('/api/users/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+  try {
+    const [[user]] = await pool.query(
+      `SELECT 
+         id,
+         nombre,
+         email,
+         rol,
+         avatar IS NOT NULL AS has_avatar,
+         CONCAT('/api/users/', id, '/avatar') AS avatar_url
+       FROM users
+       WHERE id = ?`,
+      [id]
+    );
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json(user);
+  } catch (err) {
+    console.error('Error al buscar usuario:', err);
+    res.status(500).json({ error: 'Error de servidor' });
+  }
+});
 
+// POST avatar → guardamos blob + MIME-type
+app.post(
+  '/api/users/:id/avatar',
+  upload.single('avatar'),
+  async (req, res) => {
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: 'ID inválido' });
+    if (!req.file) return res.status(400).json({ message: 'No se subió archivo' });
+    try {
+      await pool.query(
+        `UPDATE users
+           SET avatar          = ?,
+               avatar_mimetype = ?
+         WHERE id = ?`,
+        [req.file.buffer, req.file.mimetype, id]
+      );
+      // devolvemos la URL que construimos en el GET
+      res.json({ message: 'Avatar guardado', avatar_url: `/api/users/${id}/avatar` });
+    } catch (err) {
+      console.error('Error guardando avatar:', err);
+      res.status(500).json({ error: 'Error guardando avatar' });
+    }
+  }
+);
+
+// PUT datos básicos (sólo nombre/email/password)
+app.put('/api/users/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ message: 'ID inválido' });
+  const { nombre, email, password } = req.body;
+  if (!nombre || !email) {
+    return res.status(400).json({ message: 'Faltan campos: nombre y/o email' });
+  }
+  try {
+    const fields = ['nombre = ?', 'email = ?'];
+    const params = [nombre, email];
+    if (password) {
+      fields.push('password = ?');
+      params.push(password);
+    }
+    params.push(id);
+    await pool.query(
+      `UPDATE users SET ${fields.join(', ')} WHERE id = ?`,
+      params
+    );
+    res.json({ message: 'Datos básicos actualizados' });
+  } catch (err) {
+    console.error('Error actualizando usuario:', err);
+    res.status(500).json({ error: 'Error actualizando usuario' });
+  }
+});
 // ─── EXPORTAR / IMPORTAR CSV ───────────────────────────────────
 
 // Exportar CSV de usuarios
@@ -839,6 +989,31 @@ app.delete('/api/notificaciones/:id', async (req, res) => {
     res.status(500).json({ error: 'Error interno al eliminar notificación' });
   }
 });
+
+// ------------------------------------------------------------------
+//  NOTIFICACIONES ROL EMPLEADO
+// ------------------------------------------------------------------
+// backend/src/index.js (o equivalente)
+app.get('/api/mis-notificaciones', async (req, res) => {
+  const empleadoId = req.user.id;                // viene del middleware de auth
+  const [rows] = await pool.query(
+    `SELECT 
+       n.id,
+       n.asunto,
+       n.cuerpo,
+       d.estado,
+       n.creado_en
+     FROM notificaciones_destinatarios d
+     JOIN notificaciones n ON n.id = d.notificacion_id
+     WHERE d.empleado_id = ?
+     ORDER BY n.creado_en DESC`,
+    [empleadoId]
+  );
+  res.json(rows);
+});
+
+
+
 
 
 // ─── GOOGLE CALENDAR (ya configurado) ──────────────────────────────
