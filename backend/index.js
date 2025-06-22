@@ -147,26 +147,36 @@ app.post('/api/users', async (req, res) => {
 });
 
 // Actualizar usuario (admin o perfil propio)
+// PUT /api/users/:id  → actualizar nombre, email, opcionalmente password y rol
 app.put('/api/users/:id', async (req, res) => {
   const id = Number(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ message: 'ID inválido' });
+  if (isNaN(id)) {
+    return res.status(400).json({ message: 'ID inválido' });
+  }
 
   const { nombre, email, password, rol } = req.body;
   if (!nombre || !email) {
     return res.status(400).json({ message: 'Faltan campos: nombre y/o email' });
   }
 
-  // Si vienen rol, validamos y lo actualizamos
+  // Construimos dinámicamente los campos a actualizar
   const fields = ['nombre = ?', 'email = ?'];
   const params = [nombre, email];
 
+  // Si mandan nueva contraseña, la hasheamos antes de guardarla
   if (password) {
-    fields.push('password = ?');
-    params.push(password);
+    try {
+      const hash = await bcrypt.hash(password, 10);
+      fields.push('password = ?');
+      params.push(hash);
+    } catch (err) {
+      console.error('Error hasheando contraseña:', err);
+      return res.status(500).json({ message: 'Error procesando contraseña' });
+    }
   }
 
+  // Si mandan rol (solo admins lo deberían poder), lo validamos
   if (rol !== undefined) {
-    // solo admin debería enviar este campo, pero si viene, lo validamos
     if (!['empleado', 'admin'].includes(rol)) {
       return res.status(400).json({ message: 'Rol inválido' });
     }
@@ -174,13 +184,14 @@ app.put('/api/users/:id', async (req, res) => {
     params.push(rol);
   }
 
+  // Finalmente el id en el WHERE
   params.push(id);
 
   try {
     await pool.query(
       `UPDATE users
-          SET ${fields.join(', ')}
-        WHERE id = ?`,
+         SET ${fields.join(', ')}
+       WHERE id = ?`,
       params
     );
     return res.json({ message: 'Usuario actualizado' });
@@ -271,31 +282,31 @@ app.post(
 );
 
 // PUT datos básicos (sólo nombre/email/password)
-app.put('/api/users/:id', async (req, res) => {
-  const id = Number(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ message: 'ID inválido' });
-  const { nombre, email, password } = req.body;
-  if (!nombre || !email) {
-    return res.status(400).json({ message: 'Faltan campos: nombre y/o email' });
-  }
-  try {
-    const fields = ['nombre = ?', 'email = ?'];
-    const params = [nombre, email];
-    if (password) {
-      fields.push('password = ?');
-      params.push(password);
-    }
-    params.push(id);
-    await pool.query(
-      `UPDATE users SET ${fields.join(', ')} WHERE id = ?`,
-      params
-    );
-    res.json({ message: 'Datos básicos actualizados' });
-  } catch (err) {
-    console.error('Error actualizando usuario:', err);
-    res.status(500).json({ error: 'Error actualizando usuario' });
-  }
-});
+//   app.put('/api/users/:id', async (req, res) => {
+//    const id = Number(req.params.id);
+//    if (isNaN(id)) return res.status(400).json({ message: 'ID inválido' });
+//    const { nombre, email, password } = req.body;
+//    if (!nombre || !email) {
+//      return res.status(400).json({ message: 'Faltan campos: nombre y/o email' });
+//    }
+//    try {
+//      const fields = ['nombre = ?', 'email = ?'];
+//      const params = [nombre, email];
+//      if (password) {
+//        fields.push('password = ?');
+//        params.push(password);
+//      }
+//      params.push(id);
+//      await pool.query(
+//        `UPDATE users SET ${fields.join(', ')} WHERE id = ?`,
+//        params
+//      );
+//      res.json({ message: 'Datos básicos actualizados' });
+//    } catch (err) {
+//      console.error('Error actualizando usuario:', err);
+//      res.status(500).json({ error: 'Error actualizando usuario' });
+//    }
+//   });
 // ─── EXPORTAR / IMPORTAR CSV ───────────────────────────────────
 
 // Exportar CSV de usuarios
