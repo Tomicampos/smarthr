@@ -67,17 +67,17 @@ export default function Header() {
 
   return (
     <header className="app-header">
-      <div className="header-left">
-        <div className="search-box">
-          <FiSearch className="icon" />
-          <input
-            type="text"
-            placeholder="Buscar..."
-            className="search-input"
-        
-          />
-        </div>
-      </div>
+    <div className="header-left">
+      <div className="search-box">
+        <FiSearch className="icon" />
+        <input
+          type="text"
+          placeholder="Buscar..."
+          className="search-input"
+      
+        />
+       </div>
+     </div>
 
       <div className="header-right">
         <div className="datetime">
