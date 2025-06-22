@@ -1,12 +1,14 @@
 // src/AppLogin.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';        
-import './App.css';               
+import axios from 'axios';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
+import './App.css';
 
 export default function AppLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async e => {
@@ -24,7 +26,6 @@ export default function AppLogin() {
   return (
     <div className="login-container">
       <div className="login-card">
-        {/* Si tu logo se llama logo.png y está en public/ */}
         <img src="/emser.png" alt="Logo" />
         <h2>Iniciar Sesión</h2>
 
@@ -39,16 +40,26 @@ export default function AppLogin() {
               className="login-input"
             />
           </div>
+
           <div className="form-group">
             <label>Contraseña:</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              className="login-input"
-            />
+            <div className="password-wrapper">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                className="login-input"
+              />
+              <span
+                className="toggle-password"
+                onClick={() => setShowPassword(v => !v)}
+              >
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </span>
+            </div>
           </div>
+
           <button type="submit" className="btn">
             Ingresar
           </button>

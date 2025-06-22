@@ -151,5 +151,30 @@ body, html {
   .calendar-wrapper .fc .fc-timegrid-slot-lane {
     border-color: #e5e7eb;
   }
+
+  .password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper .login-input {
+  width: 100%;
+  padding-right: 2.5rem; /* espacio para el ícono */
+}
+
+.toggle-password {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-65%);
+  cursor: pointer;
+  color: #6b7280; /* gris moderado */
+  font-size: 1.25rem;
+}
+
+.toggle-password:hover {
+  color: #374151; /* gris más oscuro al hover */
+}
   
  
