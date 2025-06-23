@@ -1,6 +1,6 @@
 // src/AppLogin.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import './App.css';
@@ -55,7 +55,7 @@ export default function AppLogin() {
                 className="toggle-password"
                 onClick={() => setShowPassword(v => !v)}
               >
-                {showPassword ? <FiEyeOff /> : <FiEye />}
+                {showPassword ? <FiEyeOff title='Ocultar contraseña' /> : <FiEye title='Mostrar contraseña'/>}
               </span>
             </div>
           </div>
@@ -66,7 +66,9 @@ export default function AppLogin() {
         </form>
 
         <div className="footer">
-          ¿Olvidaste tu contraseña? <a href="#">Recupérala aquí</a>
+          <Link to="/olvide-contraseña" className="forgot-link">
+            ¿Olvidaste tu contraseña?
+          </Link>
         </div>
       </div>
     </div>

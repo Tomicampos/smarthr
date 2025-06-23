@@ -8,60 +8,163 @@ const { google }             = require('googleapis');
 const multer                 = require('multer');
 const fs                     = require('fs');
 const path                   = require('path');
-const pdfParse               = require('pdf-parse');
-const { PDFDocument }        = require('pdf-lib');
-const csvParser              = require('csv-parser');
-const fastCsv                = require('fast-csv');
+const crypto                 = require('crypto');
 const { enviarNotificacion } = require('./src/mailer.js');
-const nodemailer             = require('nodemailer');
 
-
-
-// ─── Crear app Y configurar body parsers ────────────────────────
 const app = express();
-app.use('/uploads/avatars', express.static('uploads/avatars'));
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Exponer Content-Disposition para descargas y CORS
-app.use(cors({ exposedHeaders: ['Content-Disposition'] }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Multer genérico y específicos
-const upload = multer({ storage: multer.memoryStorage() });          // para multipart/form-data sin destino
+// Multer: genérico y específicos (¡NO los elimines!)
+const upload = multer({ storage: multer.memoryStorage() });          
 const uploadUsers       = multer({ dest: 'tmp_users/' });
 const uploadDocs        = multer({ dest: 'tmp_docs/' });
 const uploadEmpleadoDoc = multer({ dest: 'tmp_emp_docs/' });
 const uploadPost        = multer();
 
 
-const avatarStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = 'uploads/avatars';
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    // ponemos userId + timestamp + extensión
-    const ext  = path.extname(file.originalname);
-    cb(null, `${req.params.id}-${Date.now()}${ext}`);
+// Static para avatares (opción A no la usa, pero te la dejo por si acaso)
+app.use('/uploads/avatars', express.static('uploads/avatars'));
+
+// CORS y body parsers
+app.use(cors({ exposedHeaders: ['Content-Disposition'] }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+
+
+// ─── RUTAS PÚBLICAS ────────────────────────────────────────────
+
+app.get('/', (req, res) => res.send('Backend funcionando correctamente.'));
+
+// LOGIN
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    if (!rows.length) return res.status(404).json({ message: 'Usuario no encontrado' });
+    const u = rows[0];
+    const ok = await bcrypt.compare(password, u.password);
+    if (!ok) return res.status(400).json({ message: 'Contraseña incorrecta' });
+
+    const token = jwt.sign(
+      { id: u.id, email: u.email, rol: u.rol, nombre: u.nombre },
+      JWT_SECRET,
+      { expiresIn: '2h' }
+    );
+    res.json({ token });
+  } catch (err) {
+    console.error('Error en /login:', err);
+    res.status(500).json({ message: 'Error interno' });
   }
 });
 
-const uploadAvatar = multer({ storage: avatarStorage });
+// OLVIDÉ CONTRASEÑA
+app.post('/auth/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: 'Falta el email' });
 
+  try {
+    const [rows] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    if (!rows.length) {
+      // respondemos igual para no revelar existencia
+      return res.status(200).json({ message: 'Si el email existe, recibirás un link.' });
+    }
+    const userId = rows[0].id;
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // +1 hora
+
+    await pool.query(
+      'INSERT INTO password_resets (user_id, token, expires_at) VALUES (?,?,?)',
+      [userId, token, expiresAt]
+    );
+
+    const frontUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetLink = `${frontUrl}/restablecer-contrasena?token=${token}`;
+
+    await enviarNotificacion({
+      to: email,
+      asunto: 'Recuperación de contraseña • SmartHR',
+      nombre: '',
+      cuerpoHtml: `
+        <p>Has solicitado restablecer tu contraseña.</p>
+        <p><a href="${resetLink}">Haz clic aquí</a> para elegir una nueva contraseña.</p>
+        <p>Este enlace expirará en 1 hora.</p>
+      `
+    });
+
+    res.status(200).json({ message: 'Si el email existe, recibirás un link.' });
+  } catch (err) {
+    console.error('Error en forgot-password:', err);
+    res.status(500).json({ message: 'Error interno' });
+  }
+});
+
+// RESTABLECER CONTRASEÑA
+app.post('/auth/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) {
+    return res.status(400).json({ message: 'Faltan datos' });
+  }
+
+  try {
+    const [[row]] = await pool.query(
+      'SELECT user_id FROM password_resets WHERE token = ? AND expires_at > NOW()',
+      [token]
+    );
+    if (!row) {
+      return res.status(400).json({ message: 'Token inválido o expirado' });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hash, row.user_id]);
+    await pool.query('DELETE FROM password_resets WHERE token = ?', [token]);
+
+    res.json({ message: 'Contraseña actualizada correctamente' });
+  } catch (err) {
+    console.error('Error en reset-password:', err);
+    res.status(500).json({ message: 'Error interno' });
+  }
+});
+
+// ─── RUTAS DE USUARIO / AVATAR 
+
+// GET datos de perfil (sin devolver BLOB)
+app.get('/api/users/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+
+  try {
+    const [[user]] = await pool.query(
+      `SELECT 
+         id, nombre, email, rol,
+         avatar IS NOT NULL             AS has_avatar,
+         CONCAT('/api/users/', id, '/avatar') AS avatar_url
+       FROM users
+       WHERE id = ?`,
+      [id]
+    );
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json(user);
+  } catch (err) {
+    console.error('Error al buscar usuario:', err);
+    res.status(500).json({ error: 'Error de servidor' });
+  }
+});
+
+// GET avatar (sirve el BLOB)
 app.get('/api/users/:id/avatar', async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).end();
+
   try {
     const [[row]] = await pool.query(
-      `SELECT avatar, avatar_mimetype
-         FROM users
-        WHERE id = ?`,
+      `SELECT avatar, avatar_mimetype FROM users WHERE id = ?`,
       [id]
     );
     if (!row || !row.avatar) return res.status(404).end();
+
     res.set('Content-Type', row.avatar_mimetype || 'image/jpeg');
     res.send(row.avatar);
   } catch (err) {
@@ -70,7 +173,117 @@ app.get('/api/users/:id/avatar', async (req, res) => {
   }
 });
 
-// ─── AUTH MIDDLEWARE ────────────────────────────────────────────
+// POST avatar (recibe multipart/form-data y guarda buffer en BLOB)
+app.post(
+  '/api/users/:id/avatar',
+  upload.single('avatar'),
+  async (req, res) => {
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: 'ID inválido' });
+    if (!req.file) return res.status(400).json({ message: 'No se subió archivo' });
+
+    try {
+      await pool.query(
+        `UPDATE users
+           SET avatar = ?, avatar_mimetype = ?
+         WHERE id = ?`,
+        [req.file.buffer, req.file.mimetype, id]
+      );
+
+      res.json({
+        message: 'Avatar guardado',
+        avatar_url: `/api/users/${id}/avatar`
+      });
+    } catch (err) {
+      console.error('Error guardando avatar:', err);
+      res.status(500).json({ error: 'Error guardando avatar' });
+    }
+  }
+);
+
+// -------------------------------------------------------------------
+// RECUPERAR CONTRASEÑA
+// -------------------------------------------------------------------
+
+// POST /api/auth/forgot-password
+app.post('/api/auth/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: 'Falta el email' });
+
+  try {
+    // 1) Verificar usuario
+    const [rows] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    if (!rows.length) {
+      // para no delatar, respondemos igual aunque no exista
+      return res.status(200).json({ message: 'Si el email existe, recibirás un link.' });
+    }
+    const userId = rows[0].id;
+
+    // 2) Generar token y expiración (1 hora)
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // +1h
+
+    // 3) Guardar en BD
+    await pool.query(
+      'INSERT INTO password_resets (user_id, token, expires_at) VALUES (?,?,?)',
+      [userId, token, expiresAt]
+    );
+
+    // 4) Enviar email con link
+    const frontUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const resetLink = `${frontUrl}/restablecer-contraseña?token=${token}`;
+    await enviarNotificacion({
+      to: email,
+      asunto: 'Recuperación de contraseña • SmartHR',
+      nombre: '', // no es personalizado
+      cuerpoHtml: `
+        <p>Has solicitado restablecer tu contraseña.</p>
+        <p>Haz clic <a href="${resetLink}">aquí</a> para elegir una nueva contraseña.</p>
+        <p>Este enlace expirará en 1 hora.</p>
+      `
+    });
+
+    return res.status(200).json({ message: 'Si el email existe, recibirás un link.' });
+  } catch (err) {
+    console.error('Error en forgot-password:', err);
+    return res.status(500).json({ message: 'Error interno' });
+  }
+});
+
+// POST /api/auth/reset-password
+app.post('/api/auth/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) {
+    return res.status(400).json({ message: 'Faltan datos' });
+  }
+
+  try {
+    // 1) Buscar token válido y no expirado
+    const [[row]] = await pool.query(
+      'SELECT user_id FROM password_resets WHERE token = ? AND expires_at > NOW()',
+      [token]
+    );
+    if (!row) {
+      return res.status(400).json({ message: 'Token inválido o expirado' });
+    }
+
+    // 2) Hashear y actualizar contraseña
+    const hash = await bcrypt.hash(password, 10);
+    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hash, row.user_id]);
+
+    // 3) Eliminar token usado
+    await pool.query('DELETE FROM password_resets WHERE token = ?', [token]);
+
+    return res.json({ message: 'Contraseña actualizada correctamente' });
+  } catch (err) {
+    console.error('Error en reset-password:', err);
+    return res.status(500).json({ message: 'Error interno' });
+  }
+});
+
+
+// ─── RUTAS PROTEGIDAS /api ────────────────────────────────────────
+
 function authMiddleware(req, res, next) {
   const auth  = req.headers.authorization || '';
   const token = auth.replace(/^Bearer\s+/i, '');
@@ -81,36 +294,7 @@ function authMiddleware(req, res, next) {
   });
 }
 
-// ─── RUTAS PÚBLICAS ────────────────────────────────────────────
-app.get('/', (req, res) => res.send('Backend funcionando correctamente.'));
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (!rows.length) return res.status(404).json({ message: 'Usuario no encontrado' });
-    const u = rows[0];
-    const ok = await bcrypt.compare(password, u.password);
-    if (!ok) return res.status(400).json({ message: 'Contraseña incorrecta' });
-    const token = jwt.sign(
-  { 
-    id: u.id,
-    email: u.email,
-    rol: u.rol,
-    nombre: u.nombre    // ← lo clave, metemos el 'nombre' de la BD
-  },
-  JWT_SECRET,
-  { expiresIn: '2h' }
-);
-    res.json({ token });
-  } catch (err) {
-    console.error('Error en /login:', err);
-    res.status(500).json({ message: 'Error interno' });
-  }
-});
-
-// ─── PROTEGEMOS TODO /api ───────────────────────────────────────
 app.use('/api', authMiddleware);
-
 
 // ─── CRUD DE USUARIOS ──────────────────────────────────────────
 
@@ -1071,6 +1255,8 @@ app.get('/api/agenda', async (req, res) => {
     res.status(500).json({ error: `No pude leer el calendario: ${err.message}` });
   }
 });
+
+
 
 // ─── LEVANTO SERVIDOR ──────────────────────────────────────────────
 app.listen(PORT, () => {
