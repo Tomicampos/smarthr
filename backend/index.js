@@ -1,3 +1,4 @@
+// index.js (backend)
 require('dotenv').config();
 const express                = require('express');
 const cors                   = require('cors');
@@ -10,10 +11,22 @@ const fs                     = require('fs');
 const path                   = require('path');
 const crypto                 = require('crypto');
 const { enviarNotificacion } = require('./src/mailer.js');
+const csvParser              = require('csv-parser');
+const pdfParse               = require('pdf-parse');
+const fastCsv                = require('fast-csv');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
+
+// CORS y body parsers
+app.use(cors({ exposedHeaders: ['Content-Disposition'] }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Static para avatares (opción A no la usa, pero te la dejo por si acaso)
+app.use('/uploads/avatars', express.static('uploads/avatars'));
+
 
 // Multer: genérico y específicos (¡NO los elimines!)
 const upload = multer({ storage: multer.memoryStorage() });          
@@ -22,19 +35,7 @@ const uploadDocs        = multer({ dest: 'tmp_docs/' });
 const uploadEmpleadoDoc = multer({ dest: 'tmp_emp_docs/' });
 const uploadPost        = multer();
 
-
-// Static para avatares (opción A no la usa, pero te la dejo por si acaso)
-app.use('/uploads/avatars', express.static('uploads/avatars'));
-
-// CORS y body parsers
-app.use(cors({ exposedHeaders: ['Content-Disposition'] }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-
-
 // ─── RUTAS PÚBLICAS ────────────────────────────────────────────
-
 app.get('/', (req, res) => res.send('Backend funcionando correctamente.'));
 
 // LOGIN
@@ -128,7 +129,78 @@ app.post('/auth/reset-password', async (req, res) => {
   }
 });
 
+// Exportar CSV de usuarios
+app.get('/api/users/export', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, nombre AS name, email, rol FROM users'
+    );
+    res.setHeader('Content-Type','text/csv');
+    res.setHeader('Content-Disposition','attachment; filename="usuarios.csv"');
+    const csvStream = fastCsv.format({ headers: true });
+    csvStream.pipe(res);
+    rows.forEach(r => csvStream.write(r));
+    csvStream.end();
+  } catch (err) {
+    console.error('Error generando CSV:', err);
+    res.status(500).json({ error: 'Error generando CSV' });
+  }
+});
+
+// Importar CSV de usuarios
+app.post('/api/users/import', uploadUsers.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No se subió archivo' });
+  const filePath = req.file.path;
+  const inserted = [];
+  const errors   = [];
+
+  fs.createReadStream(filePath)
+    .pipe(csvParser())
+    .on('data', async row => {
+      try {
+        const hash  = await bcrypt.hash(row.password || 'changeme', 10);
+        const sql   = row.id
+          ? 'INSERT INTO users (id,nombre,email,password,rol) VALUES (?,?,?,?,?)'
+          : 'INSERT INTO users (nombre,email,password,rol) VALUES (?,?,?,?)';
+        const params = row.id
+          ? [Number(row.id), row.name, row.email, hash, row.rol]
+          : [row.name, row.email, hash, row.rol];
+        await pool.query(sql, params);
+        inserted.push(row.email);
+      } catch (e) {
+        errors.push({ row, error: e.message });
+      }
+    })
+    .on('end', () => {
+      fs.unlinkSync(filePath);
+      res.json({ inserted, errors });
+    })
+    .on('error', err => {
+      fs.unlinkSync(filePath);
+      console.error('Error procesando CSV:', err);
+      res.status(500).json({ error: 'Error procesando CSV' });
+    });
+});
+
+
 // ─── RUTAS DE USUARIO / AVATAR 
+app.get('/api/users/:id/avatar', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query(
+      'SELECT avatar, avatar_mimetype FROM users WHERE id = ?', 
+      [id]
+    );
+    if (!rows[0] || !rows[0].avatar) {
+      return res.status(204).end(); // sin avatar
+    }
+    res.setHeader('Content-Type', rows[0].avatar_mimetype);
+    res.send(rows[0].avatar);
+  } catch (err) {
+    console.error('Error obteniendo avatar:', err);
+    res.status(500).json({ error: 'Error al obtener avatar' });
+  }
+});
 
 // GET datos de perfil (sin devolver BLOB)
 app.get('/api/users/:id', async (req, res) => {
@@ -314,18 +386,32 @@ app.get('/api/users', async (req, res) => {
 // Crear usuario
 app.post('/api/users', async (req, res) => {
   const { id, nombre, email, password, rol } = req.body;
+
+  // Validaciones
+  if (!id || isNaN(Number(id))) {
+    return res.status(400).json({ message: 'Debés enviar un DNI válido en el campo id' });
+  }
   if (!['empleado','admin'].includes(rol)) {
     return res.status(400).json({ message: 'Rol inválido' });
   }
+
   try {
+    // Hashear contraseña
     const hash = await bcrypt.hash(password, 10);
+
+    // Insertar incluyendo el id (DNI)
     await pool.query(
-      'INSERT INTO users (id,nombre,email,password,rol) VALUES (?,?,?,?,?)',
+      `INSERT INTO users (id, nombre, email, password, rol)
+       VALUES (?,  ?,      ?,     ?,        ?)`,
       [Number(id), nombre, email, hash, rol]
     );
+
     res.status(201).json({ id, nombre, email, rol });
   } catch (err) {
     console.error('Error creando usuario:', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ error: 'Ya existe un usuario con ese DNI' });
+    }
     res.status(500).json({ error: 'Error interno al crear usuario' });
   }
 });
@@ -493,58 +579,6 @@ app.post(
 //   });
 // ─── EXPORTAR / IMPORTAR CSV ───────────────────────────────────
 
-// Exportar CSV de usuarios
-app.get('/api/users/export', async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      'SELECT id, nombre AS name, email, rol FROM users'
-    );
-    res.setHeader('Content-Type','text/csv');
-    res.setHeader('Content-Disposition','attachment; filename="usuarios.csv"');
-    const csvStream = fastCsv.format({ headers: true });
-    csvStream.pipe(res);
-    rows.forEach(r => csvStream.write(r));
-    csvStream.end();
-  } catch (err) {
-    console.error('Error generando CSV:', err);
-    res.status(500).json({ error: 'Error generando CSV' });
-  }
-});
-
-// Importar CSV de usuarios
-app.post('/api/users/import', uploadUsers.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No se subió archivo' });
-  const filePath = req.file.path;
-  const inserted = [];
-  const errors   = [];
-
-  fs.createReadStream(filePath)
-    .pipe(csvParser())
-    .on('data', async row => {
-      try {
-        const hash  = await bcrypt.hash(row.password || 'changeme', 10);
-        const sql   = row.id
-          ? 'INSERT INTO users (id,nombre,email,password,rol) VALUES (?,?,?,?,?)'
-          : 'INSERT INTO users (nombre,email,password,rol) VALUES (?,?,?,?)';
-        const params = row.id
-          ? [Number(row.id), row.name, row.email, hash, row.rol]
-          : [row.name, row.email, hash, row.rol];
-        await pool.query(sql, params);
-        inserted.push(row.email);
-      } catch (e) {
-        errors.push({ row, error: e.message });
-      }
-    })
-    .on('end', () => {
-      fs.unlinkSync(filePath);
-      res.json({ inserted, errors });
-    })
-    .on('error', err => {
-      fs.unlinkSync(filePath);
-      console.error('Error procesando CSV:', err);
-      res.status(500).json({ error: 'Error procesando CSV' });
-    });
-});
 
 
 

@@ -1,0 +1,23 @@
+id,name,email,rol
+1,Admin Principal,admin@smarthr.com,admin
+3,test,test@smarthr.com,admin
+5,tomas importando,import@smarthr.com,empleado
+6,tomasss,tt,admin
+11,test11,test11@ewq,empleado
+155,Dukiiiii,duki@smarthr.com,admin
+1122,testDNI,re@re,empleado
+1789,holaaa,tomi@tomi.com,admin
+10000000,hola,tesla@gmail,admin
+12121212,test,test@test,admin
+12345678,tomasss,test@impor.com,admin
+14141414,meet,meet@meet,admin
+34316580,Tomas Campos,tomicampos2233@gmail.com,admin
+41878653,Tomas,tom@gmail.com,admin
+43434334,nombre test,testttt@bgej,empleado
+45555555,tyerwi,bnifew@fbqui,empleado
+99999999,tom,fyi@gmail,empleado
+111222111,test,tes@tesssss,empleado
+112223333,testq,ete@fe,empleado
+122122121,testcarga,test@carga.com,empleado
+888676666,tomas,tomas@tomas,empleado
+987654321,test987,test567@gmail.com,empleado

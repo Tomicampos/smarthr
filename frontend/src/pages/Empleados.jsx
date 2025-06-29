@@ -1,3 +1,4 @@
+// src/components/Empleados.jsx (frontend)
 import React, { useState, useEffect, useRef } from "react";
 import API from "../api";
 import EmpleadoForm from "../components/EmpleadoForm.jsx";
@@ -42,7 +43,6 @@ export default function Empleados() {
     setCurrentUser(null);
   };
   const onSaved = () => {
-    // mensaje según modo
     if (mode === "create") toast.success("Empleado creado correctamente");
     else if (mode === "edit") toast.success("Empleado actualizado correctamente");
     closeForm();
@@ -79,33 +79,30 @@ export default function Empleados() {
 
   const handleImportClick = () => fileInputRef.current.click();
 
-const handleFileChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const formData = new FormData();
-  formData.append("file", file);
+    const formData = new FormData();
+    formData.append("file", file);
 
-  try {
-    const { data: result } = await API.post("/users/import", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    try {
+      const { data: result } = await API.post("/users/import", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-    if (result.errors && result.errors.length > 0) {
-      toast.error(`Hubo ${result.errors.length} errores durante la importación.`);
-    } else {
-      toast.success("Archivo importado correctamente");
+      if (result.errors && result.errors.length > 0) {
+        toast.error(`Hubo ${result.errors.length} errores durante la importación.`);
+      } else {
+        toast.success("Archivo importado correctamente");
+      }
+
+      await cargarUsuarios();
+      setCurrentPage(1);
+      e.target.value = null;
+    } catch {
+      toast.error("Error al importar CSV");
     }
-
-    // 1) Recargamos el listado
-    await cargarUsuarios();
-    // 2) Volvemos a la primera página
-    setCurrentPage(1);
-    // 3) Limpiamos el input para poder reimportar el mismo archivo si hace falta
-    e.target.value = null;
-  } catch {
-    toast.error("Error al importar CSV");
-  }
   };
 
   // Paginación
@@ -116,115 +113,87 @@ const handleFileChange = async (e) => {
   const pagedUsers = users.slice(start, start + PAGE_SIZE);
 
   return (
-    <>
-      <div className="emp-container">
-        <div className="emp-header">
-          <h1 className="emp-title">Gestión de Usuarios</h1>
-          <div className="emp-actions">
-            <button className="emp-btn" onClick={handleExport}>📤 Exportar CSV</button>
-            <button className="emp-btn" onClick={handleImportClick}>📥 Importar CSV</button>
-            <button className="emp-btn" onClick={() => openForm("create")}>＋ Agregar Usuario</button>
-            <input
-              type="file" accept=".csv"
-              ref={fileInputRef}
-              style={{ display: "none" }}
-              onChange={handleFileChange}
-            />
-          </div>
+    <div className="emp-container">
+      <div className="emp-header">
+        <h1 className="emp-title">Gestión de Usuarios</h1>
+        <div className="emp-actions">
+          <button className="emp-btn" onClick={handleExport}>📤 Exportar CSV</button>
+          <button className="emp-btn" onClick={handleImportClick}>📥 Importar CSV</button>
+          <button className="emp-btn" onClick={() => openForm("create")}>＋ Agregar Usuario</button>
+          <input
+            type="file"
+            accept=".csv"
+            ref={fileInputRef}
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+          />
         </div>
-
-        <div className="emp-table-wrapper">
-          <table className="emp-table">
-            <thead>
-              <tr>
-                <th>DNI</th>
-                <th>Nombre y Apellido</th>
-                <th>Email</th>
-                <th>Rol</th>
-                <th className="emp-col-actions">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedUsers.map((u, idx) => (
-                <tr key={u.id} className={idx % 2 === 0 ? "emp-row-even" : "emp-row-odd"}>
-                  <td>{u.id}</td>
-                  <td>{u.nombre}</td>
-                  <td>{u.email}</td>
-                  <td>{u.rol}</td>
-                  <td className="emp-col-actions">
-                    <button
-                      className="emp-btn-action"
-                      title="Ver"
-                      onClick={() => openForm("view", u)}
-                    >
-                      <FiEye />
-                    </button>
-                    <button
-                      className="emp-btn-action"
-                      title="Editar"
-                      onClick={() => openForm("edit", u)}
-                    >
-                      <FiEdit2 />
-                    </button>
-                    <button
-                      className="emp-btn-action"
-                      title="Eliminar"
-                      onClick={() => eliminarUsuario(u)}
-                    >
-                      <FiTrash2 />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="pagination">
-            <button
-              onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              <FiChevronLeft /> Anterior
-            </button>
-            <ul>
-              {pages.map(p => (
-                <li key={p}>
-                  <button
-                    className={p === currentPage ? "active" : ""}
-                    onClick={() => setCurrentPage(p)}
-                  >
-                    {p}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              Siguiente <FiChevronRight />
-            </button>
-          </div>
-        )}
-
-        {modalOpen && (
-          <ModalGenerico
-            abierto={modalOpen}
-            onClose={closeForm}
-            titulo={
-              mode === "create"
-                ? "Crear empleado"
-                : mode === "edit"
-                ? "Editar empleado"
-                : "Ver empleado"
-            }
-          >
-            <EmpleadoForm mode={mode} user={currentUser} onSuccess={onSaved} />
-          </ModalGenerico>
-        )}
       </div>
-    </>
+
+      <div className="emp-table-wrapper">
+        <table className="emp-table">
+          <thead>
+            <tr>
+              <th>DNI</th>
+              <th>Nombre y Apellido</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th className="emp-col-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pagedUsers.map((u, idx) => (
+              <tr key={u.id} className={idx % 2 === 0 ? "emp-row-even" : "emp-row-odd"}>
+                <td>{u.id}</td>
+                <td>{u.nombre}</td>
+                <td>{u.email}</td>
+                <td>{u.rol}</td>
+                <td className="emp-col-actions">
+                  <button className="emp-btn-action" title="Ver" onClick={() => openForm("view", u)}>
+                    <FiEye />
+                  </button>
+                  <button className="emp-btn-action" title="Editar" onClick={() => openForm("edit", u)}>
+                    <FiEdit2 />
+                  </button>
+                  <button className="emp-btn-action" title="Eliminar" onClick={() => eliminarUsuario(u)}>
+                    <FiTrash2 />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>
+            <FiChevronLeft /> Anterior
+          </button>
+          <ul>
+            {pages.map(p => (
+              <li key={p}>
+                <button className={p === currentPage ? "active" : ""} onClick={() => setCurrentPage(p)}>
+                  {p}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>
+            Siguiente <FiChevronRight />
+          </button>
+        </div>
+      )}
+
+      {modalOpen && (
+        <ModalGenerico abierto={modalOpen} onClose={closeForm} titulo={
+          mode === "create" ? "Crear empleado" :
+          mode === "edit"   ? "Editar empleado" :
+                              "Ver empleado"
+        }>
+          <EmpleadoForm mode={mode} user={currentUser} onSuccess={onSaved} />
+        </ModalGenerico>
+      )}
+    </div>
   );
 }
