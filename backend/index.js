@@ -14,6 +14,8 @@ const { enviarNotificacion } = require('./src/mailer.js');
 const csvParser              = require('csv-parser');
 const pdfParse               = require('pdf-parse');
 const fastCsv                = require('fast-csv');
+const { PDFDocument } = require('pdf-lib')
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;

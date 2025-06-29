@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import API from '../api';
 import ModalGenerico from './ModalGenerico';
-import { FiDownload, FiTrash2 } from 'react-icons/fi';
+import { FiDownload, FiTrash2, FiEye } from 'react-icons/fi';
 import { useToast } from './ToastContext';
 import './EditarDocsModal.css';
 
@@ -41,9 +41,11 @@ export default function EditarDocsModal({ empleado, onClose }) {
     const form = new FormData();
     form.append('file', selectedFile);
     try {
-      await API.post(`/empleados/${empleado.id}/documentos`, form, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await API.post(
+        `/empleados/${empleado.id}/documentos`,
+        form,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
       toast.success('Documento cargado exitosamente.');
       setSelectedFile(null);
       fetchDocumentos();
@@ -62,14 +64,73 @@ export default function EditarDocsModal({ empleado, onClose }) {
       );
       const cd = res.headers['content-disposition'] || '';
       const fn = (cd.match(/filename="?(.+)"?/) || [])[1] || `documento_${id}`;
-      const url = URL.createObjectURL(res.data);
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = fn; document.body.appendChild(a);
-      a.click(); a.remove(); URL.revokeObjectURL(url);
+      a.href = url;
+      a.download = fn;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     } catch {
       toast.error('No se pudo descargar el documento.');
     }
   };
+
+  // Abrir PDF en una nueva pestaña
+const visualizarDocumento = async id => {
+  try {
+    // 1) Bajamos el blob (Axios lleva el token)
+    const res = await API.get(
+      `/empleados/${empleado.id}/documentos/${id}/download`,
+      { responseType: 'blob' }
+    );
+    // 2) Nombre real con extensión
+    const cd = res.headers['content-disposition'] || '';
+    const fn = (cd.match(/filename="?(.+)"?/) || [])[1] || `documento_${id}.pdf`;
+
+    // 3) Creamos el PDF-URL
+    const pdfBlob = new Blob([res.data], { type: 'application/pdf' });
+    const pdfUrl  = URL.createObjectURL(pdfBlob);
+
+    // 4) Construimos el HTML wrapper
+    const html = `
+      <!DOCTYPE html>
+      <html lang="es">
+        <head>
+          <meta charset="UTF-8"/>
+          <title>${fn}</title>
+          <style>body,html{margin:0;height:100%}</style>
+        </head>
+        <body>
+          <iframe
+            src="${pdfUrl}"
+            width="100%"
+            height="100%"
+            style="border:none"
+          ></iframe>
+        </body>
+      </html>
+    `;
+    const htmlBlob = new Blob([html], { type: 'text/html' });
+    const htmlUrl  = URL.createObjectURL(htmlBlob);
+
+    // 5) Abrimos la pestaña con el título correcto
+    window.open(htmlUrl, '_blank', 'noopener,noreferrer');
+
+    // 6) Revocamos URLs tras un delay
+    setTimeout(() => {
+      URL.revokeObjectURL(pdfUrl);
+      URL.revokeObjectURL(htmlUrl);
+    }, 2000);
+
+  } catch (err) {
+    console.error(err);
+    toast.error('No se pudo abrir el PDF en nueva pestaña.');
+  }
+};
+
 
   const eliminarDocumento = async id => {
     if (!window.confirm('¿Eliminar este documento?')) return;
@@ -88,7 +149,6 @@ export default function EditarDocsModal({ empleado, onClose }) {
       onClose={onClose}
       titulo={`Documentos de ${empleado.nombre}`}
     >
-      {/* ─── Subir nuevo documento ──────────────────────────── */}
       <form onSubmit={handleUpload} className="upload-form">
         <div className="upload-left">
           <input
@@ -117,7 +177,6 @@ export default function EditarDocsModal({ empleado, onClose }) {
         </button>
       </form>
 
-      {/* ─── Lista de documentos existentes ────────────────── */}
       <div className="doc-list-wrapper">
         {cargandoDocs ? (
           <p>Cargando documentos…</p>
@@ -138,16 +197,13 @@ export default function EditarDocsModal({ empleado, onClose }) {
                   <td>{d.file_name}</td>
                   <td>{new Date(d.fecha_subida).toLocaleDateString()}</td>
                   <td className="doc-col-actions">
-                    <button
-                      title="Descargar"
-                      onClick={() => descargarDocumento(d.id)}
-                    >
+                    <button title="Ver" onClick={() => visualizarDocumento(d.id)}>
+                      <FiEye />
+                    </button>
+                    <button title="Descargar" onClick={() => descargarDocumento(d.id)}>
                       <FiDownload />
                     </button>
-                    <button
-                      title="Eliminar"
-                      onClick={() => eliminarDocumento(d.id)}
-                    >
+                    <button title="Eliminar" onClick={() => eliminarDocumento(d.id)}>
                       <FiTrash2 />
                     </button>
                   </td>

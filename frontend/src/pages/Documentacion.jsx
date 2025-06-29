@@ -8,6 +8,7 @@ import {
   FiChevronRight,
   FiDownload,
   FiTrash2,
+  FiEye,
   FiEdit2
 } from 'react-icons/fi';
 import './Documentacion.css';
@@ -108,6 +109,18 @@ export default function Documentacion() {
     }
   };
 
+  const viewRecibo = async id => {
+    try {
+      const res = await API.get(`/docs/${id}/download`, { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url  = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    } catch {
+      toast.error('No se pudo abrir el recibo.');
+    }
+  };
+
   const removeRecibo = async id => {
     if (!window.confirm('¿Eliminar este recibo?')) return;
     try {
@@ -174,6 +187,9 @@ export default function Documentacion() {
                   <td>{`${r.period_month}/${r.period_year}`}</td>
                   <td>{r.file_name}</td>
                   <td className="doc-col-actions">
+                    <button title="Ver" onClick={() => viewRecibo(r.id)}>
+                      <FiEye />
+                    </button>
                     <button title="Descargar" onClick={() => downloadRecibo(r.id)}>
                       <FiDownload />
                     </button>
