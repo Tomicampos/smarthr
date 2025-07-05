@@ -196,3 +196,52 @@ input[type=number]::-webkit-inner-spin-button {
   margin: 0;
 }
 
+.modal-body p {
+  margin: 0.5rem 0;
+  line-height: 1.4;
+  font-size: 0.95rem;
+}
+.modal-body p b {
+  display: inline-block;
+  width: 80px;
+  color: #333;
+}
+
+/* Enlaces modernos */
+.modal-body a {
+  color: #b91c1c; /* LinkedIn-blue */
+  text-decoration: none;
+  font-weight: 500;
+}
+.modal-body a:hover {
+  text-decoration: underline;
+}
+
+/* “Botón” de CV como enlace plano */
+.modal-body button.link-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: #0073b1;
+  cursor: pointer;
+  text-decoration: none;
+}
+.modal-body button.link-button:hover {
+  text-decoration: underline;
+}
+
+/* 8) Responsive tweaks */
+@media (max-width: 500px) {
+  .modal-container {
+    margin: 0 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+}
+
+/* Elimina flechas en inputs número */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

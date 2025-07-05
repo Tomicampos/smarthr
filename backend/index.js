@@ -212,7 +212,7 @@ app.get('/api/users/:id', async (req, res) => {
   try {
     const [[user]] = await pool.query(
       `SELECT 
-         id, nombre, email, rol,
+         id, nombre, email, rol, linkedin,
          avatar IS NOT NULL             AS has_avatar,
          CONCAT('/api/users/', id, '/avatar') AS avatar_url
        FROM users
@@ -387,7 +387,7 @@ app.get('/api/users', async (req, res) => {
 
 // Crear usuario
 app.post('/api/users', async (req, res) => {
-  const { id, nombre, email, password, rol } = req.body;
+  const { id, nombre, email, password, rol, linkedin } = req.body;
 
   // Validaciones
   if (!id || isNaN(Number(id))) {
@@ -403,9 +403,9 @@ app.post('/api/users', async (req, res) => {
 
     // Insertar incluyendo el id (DNI)
     await pool.query(
-      `INSERT INTO users (id, nombre, email, password, rol)
+      `INSERT INTO users (id, nombre, email, password, rol, linkedin)
        VALUES (?,  ?,      ?,     ?,        ?)`,
-      [Number(id), nombre, email, hash, rol]
+      [Number(id), nombre, email, hash, rol, linkedin]
     );
 
     res.status(201).json({ id, nombre, email, rol });
@@ -426,7 +426,7 @@ app.put('/api/users/:id', async (req, res) => {
     return res.status(400).json({ message: 'ID inválido' });
   }
 
-  const { nombre, email, password, rol } = req.body;
+  const { nombre, email, password, rol, linkedin } = req.body;
   if (!nombre || !email) {
     return res.status(400).json({ message: 'Faltan campos: nombre y/o email' });
   }
@@ -1018,25 +1018,53 @@ app.get('/api/reclutamiento/:id/postulantes', async (req, res) => {
 // 6) Crear postulante (multipart/form-data)
 app.post(
   '/api/reclutamiento/:id/postulantes',
-  uploadPost.fields([{ name: 'cv' }, { name: 'docs' }]),
+  uploadPost.single('cv'),
   async (req, res) => {
     try {
-      const proc = Number(req.params.id);
-      const { nombre, email, telefono, notas } = req.body;
+      const proc = +req.params.id;
+      const { nombre, email, telefono, notas, linkedin } = req.body;
+
+      // ▷ aquí el handling seguro de cv_blob
+      let cvBlob = null;
+      let cvName = null;
+      if (req.file) {
+        cvName = req.file.originalname;
+        if (req.file.buffer) {
+          // multer.memoryStorage()
+          cvBlob = req.file.buffer;
+        } else if (req.file.path) {
+          // multer.diskStorage()
+          cvBlob = fs.readFileSync(req.file.path);
+          // opcionalmente limpia:
+          fs.unlinkSync(req.file.path);
+        }
+      }
+
       await pool.query(
         `INSERT INTO postulantes 
-           (proceso_id, nombre, email, telefono, notas) 
-         VALUES (?, ?, ?, ?, ?)`,
-        [proc, nombre, email, telefono || null, notas || null]
+           (proceso_id, nombre, email, telefono, notas, cv_blob, cv_filename, linkedin)
+         VALUES (?,?,?,?,?,?,?,?)`,
+        [
+          proc,
+          nombre,
+          email,
+          telefono || null,
+          notas    || null,
+          cvBlob,
+          cvName,
+          linkedin || null
+        ]
       );
-      // si quieres salvar archivos, usa req.files.cv y req.files.docs aquí
-      res.status(201).json({ ok: true });
+
+      return res.status(201).json({ ok: true });
     } catch (err) {
       console.error('Error al crear postulante:', err);
-      res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: err.message });
     }
   }
 );
+
+
 
 // 7) Avanzar etapa postulante
 app.post(
@@ -1059,7 +1087,6 @@ app.post(
 );
 
 // 8) Eliminar postulante
-// DELETE /api/reclutamiento/:pid/postulantes/:uid
 app.delete(
   '/api/reclutamiento/:pid/postulantes/:uid',
   async (req, res) => {
@@ -1119,13 +1146,13 @@ app.post(
   uploadPost.single('cv'),
   async (req, res) => {
     const proc = +req.params.id;
-    const { nombre, email, telefono, notas } = req.body;
+    const { nombre, email, telefono, notas, linkedin } = req.body;
     const cvBlob = req.file ? fs.readFileSync(req.file.path) : null;
     const cvName = req.file ? req.file.originalname : null;
     await pool.query(
       `INSERT INTO postulantes
-        (proceso_id,nombre,email,telefono,notas,cv_blob,cv_filename)
-       VALUES (?,?,?,?,?,?,?)`,
+        (proceso_id,nombre,email,telefono,notas,cv_blob,cv_filename, linkedin)
+       VALUES (?,?,?,?,?,?,?,?)`,
       [proc,nombre,email,telefono||null,notas||null,cvBlob,cvName]
     );
     if (req.file?.path) fs.unlinkSync(req.file.path);
@@ -1137,10 +1164,18 @@ app.post(
 app.get('/api/reclutamiento/:pid/postulantes/:uid', async (req, res) => {
   const pid = +req.params.pid, uid = +req.params.uid;
   const [[u]] = await pool.query(
-    `SELECT id, proceso_id, nombre, email, telefono, notas, cv_filename
+    `SELECT
+        id,
+        proceso_id,
+        nombre,
+        email,
+        telefono,
+        notas,
+        linkedin,
+        cv_filename
      FROM postulantes
      WHERE id=? AND proceso_id=?`,
-    [uid,pid]
+    [uid, pid]
   );
   if (!u) return res.status(404).end();
   res.json(u);
@@ -1153,15 +1188,15 @@ app.get('/api/reclutamiento/:pid/postulantes/:uid/cv/download', async (req, res)
     `SELECT cv_blob, cv_filename
      FROM postulantes
      WHERE id=? AND proceso_id=?`,
-    [uid,pid]
+    [uid, pid]
   );
   if (!u || !u.cv_blob) return res.status(404).end();
   res.setHeader('Content-Type','application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="${u.cv_filename}"`);
   res.send(u.cv_blob);
-
-
 });
+
+
 // ————————————————
 // RUTA HISTÓRICO
 // ————————————————

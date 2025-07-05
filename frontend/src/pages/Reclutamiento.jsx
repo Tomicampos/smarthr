@@ -24,7 +24,7 @@ const etapasDef = [
 ];
 const PAGE_SIZE = 9;
 
-// ← objeto para resetear formulario
+// ← objeto para resetear formulario de proceso
 const DEFAULT_NUEVO_PROC = {
   codigo: '',
   puesto_id: '',
@@ -62,7 +62,8 @@ export default function Reclutamiento() {
     email: '',
     telefono: '',
     cv_file: null,
-    notas: ''
+    notas: '',
+    linkedin: ''
   });
 
   // ── filtros ──
@@ -91,7 +92,6 @@ export default function Reclutamiento() {
     API.get('/areas')
       .then(r => setAreas(r.data))
       .catch(() => toast.error('No se pudieron cargar áreas'));
-
     API.get('/puestos')
       .then(r => setPuestos(r.data))
       .catch(() => toast.error('No se pudieron cargar puestos'));
@@ -127,7 +127,7 @@ export default function Reclutamiento() {
     }, 50);
   }, [hash, procesos, procesosFiltrados]);
 
-  // ── handlers de modal ──
+  // ── handlers proceso ──
   const abrirModalProc = () => {
     setNuevoProc(DEFAULT_NUEVO_PROC);
     setModalProc(true);
@@ -136,8 +136,6 @@ export default function Reclutamiento() {
     setModalProc(false);
     setNuevoProc(DEFAULT_NUEVO_PROC);
   };
-
-  // ── guardar proceso ──
   const guardarProc = async () => {
     if (!nuevoProc.codigo.trim()) {
       toast.error('El código es obligatorio.');
@@ -153,9 +151,9 @@ export default function Reclutamiento() {
     }
     try {
       await API.post('/reclutamiento', {
-        codigo:        nuevoProc.codigo.trim(),
-        puesto_id:     nuevoProc.puesto_id,
-        area_id:       nuevoProc.area_id,
+        codigo: nuevoProc.codigo.trim(),
+        puesto_id: nuevoProc.puesto_id,
+        area_id: nuevoProc.area_id,
         tipo_busqueda: nuevoProc.tipo_busqueda
       });
       toast.success('Proceso creado');
@@ -165,8 +163,6 @@ export default function Reclutamiento() {
       toast.error('No se pudo crear proceso');
     }
   };
-
-  // ── eliminar proceso ──
   const eliminarProc = async id => {
     if (!window.confirm('¿Eliminar este proceso?')) return;
     try {
@@ -178,11 +174,19 @@ export default function Reclutamiento() {
     }
   };
 
-  // ── resto de funciones de postulantes ──
+  // ── handlers postulante ──
   const guardarPost = async () => {
     if (!nuevoPost.proceso_id) {
       toast.error('Debe seleccionar un proceso');
       return;
+    }
+    // Validación LinkedIn
+    if (nuevoPost.linkedin) {
+      const pattern = /^https?:\/\/(www\.)?linkedin\.com\/.+$/i;
+      if (!pattern.test(nuevoPost.linkedin.trim())) {
+        toast.error('La URL de LinkedIn no es válida.');
+        return;
+      }
     }
     try {
       const fd = new FormData();
@@ -190,8 +194,8 @@ export default function Reclutamiento() {
       fd.append('email', nuevoPost.email);
       fd.append('telefono', nuevoPost.telefono);
       fd.append('notas', nuevoPost.notas);
+      fd.append('linkedin', nuevoPost.linkedin.trim());
       if (nuevoPost.cv_file) fd.append('cv', nuevoPost.cv_file);
-
       await API.post(
         `/reclutamiento/${nuevoPost.proceso_id}/postulantes`,
         fd,
@@ -199,12 +203,21 @@ export default function Reclutamiento() {
       );
       toast.success('Postulante agregado');
       setModalPost(false);
-      setNuevoPost({ proceso_id: '', nombre: '', email: '', telefono: '', notas: '', cv_file: null });
+      setNuevoPost({
+        proceso_id: '',
+        nombre: '',
+        email: '',
+        telefono: '',
+        cv_file: null,
+        notas: '',
+        linkedin: ''
+      });
       cargar();
     } catch {
       toast.error('No se pudo agregar postulante');
     }
   };
+
   const verPostulante = async (pid, uid) => {
     setDetallePost(null);
     setModalVer(true);
@@ -215,6 +228,22 @@ export default function Reclutamiento() {
       toast.error('No se pudo cargar detalle');
     }
   };
+
+  const viewCv = async (pid, uid) => {
+    try {
+      const res = await API.get(
+        `/reclutamiento/${pid}/postulantes/${uid}/cv/download`,
+        { responseType: 'blob' }
+      );
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    } catch {
+      toast.error('No se pudo abrir el CV.');
+    }
+  };
+
   const avanzarPost = async (pid, uid) => {
     try {
       await API.post(`/reclutamiento/${pid}/postulantes/${uid}/avanzar`);
@@ -261,12 +290,8 @@ export default function Reclutamiento() {
           <FiChevronDown className="select-icon" />
         </div>
         <div className="rec-actions">
-          <button className="btn-red" onClick={abrirModalProc}>
-            + Nuevo Proceso
-          </button>
-          <button className="btn-red" onClick={() => setModalPost(true)}>
-            + Nuevo Postulante
-          </button>
+          <button className="btn-red" onClick={abrirModalProc}>+ Nuevo Proceso</button>
+          <button className="btn-red" onClick={() => setModalPost(true)}>+ Nuevo Postulante</button>
         </div>
       </div>
 
@@ -298,13 +323,10 @@ export default function Reclutamiento() {
                     </button>
                   </td>
                 </tr>
-
                 {expandidos[p.id] && (
                   <tr className="rec-detail-row">
                     <td colSpan="8">
                       <div className="rec-detail">
-
-                        {/* ─── Línea de tiempo ───────────────────────── */}
                         <div className="timeline">
                           {etapasDef.map((et, i) => (
                             <div key={i} className={`step ${i < p.etapa_actual ? 'done' : ''}`}>
@@ -317,12 +339,10 @@ export default function Reclutamiento() {
                           <p><b>Tipo:</b> {p.tipo_busqueda}</p>
                           <p><b>Responsable:</b> {p.responsable}</p>
                         </div>
-                        {/* ──────────────────────────────────────────────── */}
-
                         <PostulantesList
                           procesoId={p.id}
-                          onAvanzar={avanzarPost}
                           onVer={verPostulante}
+                          onAvanzar={avanzarPost}
                           onEliminar={eliminarPostulante}
                         />
                       </div>
@@ -331,7 +351,6 @@ export default function Reclutamiento() {
                 )}
               </React.Fragment>
             ))}
-
             {!paged.length && (
               <tr><td colSpan="8" className="no-data">No hay procesos que coincidan.</td></tr>
             )}
@@ -342,20 +361,18 @@ export default function Reclutamiento() {
       {/* ── Paginación ── */}
       {totalPages > 1 && (
         <div className="pagination">
-          <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>
-            <FiChevronLeft /> Anterior
+          <button onClick={() => setCurrentPage(p => Math.max(p-1, 1))} disabled={currentPage===1}>
+            <FiChevronLeft/> Anterior
           </button>
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i + 1}
-              className={currentPage === i + 1 ? 'active' : ''}
-              onClick={() => setCurrentPage(i + 1)}
-            >
-              {i + 1}
+          {[...Array(totalPages)].map((_,i)=>(
+            <button key={i+1}
+                    className={currentPage===i+1?'active':''}
+                    onClick={()=>setCurrentPage(i+1)}>
+              {i+1}
             </button>
           ))}
-          <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>
-            Siguiente <FiChevronRight />
+          <button onClick={() => setCurrentPage(p => Math.min(p+1, totalPages))} disabled={currentPage===totalPages}>
+            Siguiente <FiChevronRight/>
           </button>
         </div>
       )}
@@ -368,84 +385,92 @@ export default function Reclutamiento() {
           value={nuevoProc.codigo}
           onChange={e => setNuevoProc(np => ({ ...np, codigo: e.target.value }))}
         />
-
         <label>Puesto</label>
         <select
           required
           value={nuevoProc.puesto_id}
-          onChange={e => setNuevoProc(np => ({
-            ...np,
-            puesto_id: e.target.value === '' ? '' : Number(e.target.value)
-          }))}
+          onChange={e => setNuevoProc(np => ({ ...np, puesto_id: e.target.value ? Number(e.target.value) : '' }))}
         >
-          <option value="">Selecciona un puesto</option>
-          {puestos.map(pu => (
-            <option key={pu.id} value={pu.id}>{pu.nombre}</option>
-          ))}
+          <option value="">— Selecciona un puesto —</option>
+          {puestos.map(pu => <option key={pu.id} value={pu.id}>{pu.nombre}</option>)}
         </select>
-
         <label>Área</label>
         <select
           required
           value={nuevoProc.area_id}
-          onChange={e => setNuevoProc(np => ({
-            ...np,
-            area_id: e.target.value === '' ? '' : Number(e.target.value)
-          }))}
+          onChange={e => setNuevoProc(np => ({ ...np, area_id: e.target.value ? Number(e.target.value) : '' }))}
         >
-          <option value="">Selecciona un área</option>
-          {areas.map(a => (
-            <option key={a.id} value={a.id}>{a.nombre}</option>
-          ))}
+          <option value="">— Selecciona un área —</option>
+          {areas.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
         </select>
-
         <label>Tipo de búsqueda</label>
         <select
           value={nuevoProc.tipo_busqueda}
           onChange={e => setNuevoProc(np => ({ ...np, tipo_busqueda: e.target.value }))}
         >
-          <option>Interna</option>
-          <option>Externa</option>
+          <option>Interna</option><option>Externa</option>
         </select>
-
         <div className="modal-footer">
-          <button className="btn-primary" type="button" onClick={guardarProc}>
-            Guardar
-          </button>
+          <button className="btn-primary" onClick={guardarProc}>Guardar</button>
         </div>
       </ModalGenerico>
 
       {/* ── Modal Agregar Postulante ── */}
-      <ModalGenerico abierto={modalPost} onClose={() => setModalPost(false)} titulo="Agregar Postulante">
+      <ModalGenerico abierto={modalPost} onClose={() => {
+        setModalPost(false);
+        setNuevoPost({
+          proceso_id: '',
+          nombre: '',
+          email: '',
+          telefono: '',
+          cv_file: null,
+          notas: '',
+          linkedin: ''
+        });
+      }} titulo="Agregar Postulante">
         <div className="modal-body">
           <label>Proceso</label>
-          <select value={nuevoPost.proceso_id} onChange={e => setNuevoPost({ ...nuevoPost, proceso_id: e.target.value })}>
-            <option value="">Selecciona uno</option>
-            {procesos.map(p => (
-              <option key={p.id} value={p.id}>{p.codigo} — {p.puesto}</option>
+          <select
+            value={nuevoPost.proceso_id}
+            onChange={e => setNuevoPost(np => ({ ...np, proceso_id: e.target.value }))}
+          >
+            <option value="">— Selecciona uno —</option>
+            {procesos.map(pr => (
+              <option key={pr.id} value={pr.id}>{pr.codigo} — {pr.puesto}</option>
             ))}
           </select>
           <label>Nombre</label>
           <input
             placeholder="Ingrese Nombre y Apellido"
             value={nuevoPost.nombre}
-            onChange={e => setNuevoPost({ ...nuevoPost, nombre: e.target.value })}
+            onChange={e => setNuevoPost(np => ({ ...np, nombre: e.target.value }))}
           />
           <label>Email</label>
           <input
-            placeholder="Ingrese un correo electrónico"
             type="email"
+            placeholder="Ingrese un correo electrónico"
             value={nuevoPost.email}
-            onChange={e => setNuevoPost({ ...nuevoPost, email: e.target.value })}
+            onChange={e => setNuevoPost(np => ({ ...np, email: e.target.value }))}
           />
           <label>Teléfono</label>
           <input
             placeholder="Ingrese un número de teléfono"
             value={nuevoPost.telefono}
-            onChange={e => setNuevoPost({ ...nuevoPost, telefono: e.target.value })}
+            onChange={e => setNuevoPost(np => ({ ...np, telefono: e.target.value }))}
+          />
+          <label>LinkedIn (URL)</label>
+          <input
+            type="url"
+            placeholder="https://www.linkedin.com/in/usuario"
+            value={nuevoPost.linkedin}
+            onChange={e => setNuevoPost(np => ({ ...np, linkedin: e.target.value }))}
           />
           <label>CV (PDF)</label>
-          <input type="file" accept="application/pdf" onChange={e => setNuevoPost({ ...nuevoPost, cv_file: e.target.files[0] })}/>
+          <input
+            type="file"
+            accept="application/pdf"
+            onChange={e => setNuevoPost(np => ({ ...np, cv_file: e.target.files[0] }))}
+          />
           <div className="modal-footer">
             <button className="btn-red" onClick={guardarPost}>Guardar</button>
           </div>
@@ -457,15 +482,48 @@ export default function Reclutamiento() {
         {detallePost ? (
           <div className="modal-body">
             <p><b>Nombre:</b> {detallePost.nombre}</p>
-            <p><b>Email:</b> {detallePost.email}</p>
-            <p><b>Teléfono:</b> {detallePost.telefono}</p>
+            <p><b>Email:</b>{' '}
+              <a href={`mailto:${detallePost.email}`} target="_blank" rel="noopener noreferrer">
+                {detallePost.email}
+              </a>
+            </p>
+            {detallePost.telefono && (
+              <p><b>Teléfono:</b>{' '}
+                <a
+                  href={`https://wa.me/+549${detallePost.telefono.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {detallePost.telefono}
+                </a>
+              </p>
+            )}
+            {detallePost.linkedin && (
+              <p><b>LinkedIn:</b>{' '}
+                <a href={detallePost.linkedin} target="_blank" rel="noopener noreferrer">
+                  {detallePost.linkedin}
+                </a>
+              </p>
+            )}
             {detallePost.notas && <>
               <b>Notas:</b>
               <p className="detalle-notas">{detallePost.notas}</p>
             </>}
-            {detallePost.cv_url && (
-              <p><b>CV:</b> <a href={detallePost.cv_url} target="_blank" rel="noopener noreferrer">Descargar</a></p>
-            )}
+            {detallePost.cv_filename && (
+             <p>
+               <b>CV:</b>{' '}
+               <a
+                 href="#"
+                 className="link-button"
+                 onClick={e => {
+                   e.preventDefault();
+                   viewCv(detallePost.proceso_id, detallePost.id);
+                 }}
+               >
+                 {detallePost.cv_filename}
+               </a>
+             </p>
+             )}
           </div>
         ) : (
           <div className="modal-body"><p>Cargando detalles…</p></div>
@@ -475,26 +533,22 @@ export default function Reclutamiento() {
   );
 }
 
-
 // ── COMPONENTE AUXILIAR PostulantesList ──
-function PostulantesList({ procesoId, onAvanzar, onVer, onEliminar }) {
+function PostulantesList({ procesoId, onVer, onAvanzar, onEliminar }) {
   const toast = useToast();
   const [lista, setLista] = useState([]);
-
   useEffect(() => {
-    let montado = true;
+    let mounted = true;
     API.get(`/reclutamiento/${procesoId}/postulantes`)
-      .then(r => montado && setLista(r.data))
+      .then(r => mounted && setLista(r.data))
       .catch(() => toast.error('Error al cargar postulantes'));
-    return () => { montado = false; };
+    return () => { mounted = false; };
   }, [procesoId, toast]);
 
   return (
     <table className="post-table">
       <thead>
-        <tr>
-          <th>Nombre</th><th>Email</th><th>Etapa</th><th>Acciones</th>
-        </tr>
+        <tr><th>Nombre</th><th>Email</th><th>Etapa</th><th>Acciones</th></tr>
       </thead>
       <tbody>
         {lista.map(u => (
@@ -503,14 +557,15 @@ function PostulantesList({ procesoId, onAvanzar, onVer, onEliminar }) {
             <td>{u.email}</td>
             <td>{etapasDef[u.etapa_actual - 1]}</td>
             <td className="rec-col-actions">
-              <button title="Avanzar etapa" onClick={() => onAvanzar(procesoId, u.id)} disabled={u.etapa_actual >= etapasDef.length}>
-                <FiChevronRight />
+              <button title="Avanzar etapa" onClick={() => onAvanzar(procesoId, u.id)}
+                disabled={u.etapa_actual >= etapasDef.length}>
+                <FiChevronRight/>
               </button>
               <button title="Ver detalle" onClick={() => onVer(procesoId, u.id)}>
-                <FiEye />
+                <FiEye/>
               </button>
               <button title="Eliminar postulante" onClick={() => onEliminar(procesoId, u.id)}>
-                <FiTrash2 />
+                <FiTrash2/>
               </button>
             </td>
           </tr>

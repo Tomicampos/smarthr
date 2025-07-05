@@ -11,6 +11,7 @@ export default function EmpleadoForm({ mode, user, onSuccess }) {
   const [email, setEmail] = useState(user?.email || "");
   const [password, setPassword] = useState("");
   const [rol, setRol] = useState(user?.rol || "empleado");
+  
 
   useEffect(() => {
     if (mode === "edit" && user) {
