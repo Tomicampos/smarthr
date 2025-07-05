@@ -886,7 +886,33 @@ const etapasDef = [
   'Desafío técnico',
   'Candidato seleccionado'
 ];
-// 1 devuelve todas las áreas
+
+// Lista todos los puestos
+app.get('/api/puestos', authMiddleware, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, nombre FROM puestos ORDER BY nombre'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Error listando puestos:', err);
+    res.status(500).json({ error: 'No se pudieron cargar los puestos' });
+  }
+});
+// 1 devuelve lista de puestos
+app.get('/api/puestos', authMiddleware, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, nombre FROM puestos ORDER BY nombre'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Error listando puestos:', err);
+    res.status(500).json({ error: 'No se pudieron cargar los puestos' });
+  }
+});
+
+// 1.0.1 devuelve todas las áreas
 app.get('/api/areas', authMiddleware, async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -905,7 +931,8 @@ app.get('/api/reclutamiento', authMiddleware, async (req, res) => {
       `SELECT 
          r.id,
          r.codigo,
-         r.puesto,
+         r.puesto_id,
+         p.nombre AS puesto,
          r.area_id,
          a.nombre AS area,
          r.tipo_busqueda,
@@ -915,6 +942,7 @@ app.get('/api/reclutamiento', authMiddleware, async (req, res) => {
          r.fecha_fin,
          u.nombre AS responsable
        FROM reclutamiento r
+       JOIN puestos p     ON p.id = r.puesto_id 
        JOIN areas a       ON a.id = r.area_id
        JOIN users u       ON u.id = r.creado_por
        ORDER BY r.fecha_inicio DESC`
@@ -928,13 +956,19 @@ app.get('/api/reclutamiento', authMiddleware, async (req, res) => {
 
 // 2) Crear proceso
 app.post('/api/reclutamiento', authMiddleware, async (req, res) => {
-  const { codigo, puesto, area_id, tipo_busqueda } = req.body;
+  const {
+    codigo,
+    puesto_id,   
+    area_id,      
+    tipo_busqueda
+  } = req.body;
+
   try {
     await pool.query(
-      `INSERT INTO reclutamiento 
-         (codigo, puesto, area_id, tipo_busqueda, creado_por)
-       VALUES (?,      ?,      ?,       ?,            ?)`,
-      [codigo, puesto, area_id, tipo_busqueda, req.user.id]
+      `INSERT INTO reclutamiento
+         (codigo, puesto_id, area_id, tipo_busqueda, creado_por)
+       VALUES (?,      ?,         ?,       ?,            ?)`,
+      [codigo, puesto_id, area_id, tipo_busqueda, req.user.id]
     );
     res.status(201).json({ ok: true });
   } catch (err) {
