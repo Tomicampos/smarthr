@@ -10,6 +10,7 @@ import { ToastProvider }     from './components/ToastContext';
 
 import Dashboard            from './pages/Dashboard';
 import Reclutamiento        from './pages/Reclutamiento';
+import Postulantes          from './pages/Postulantes';
 import Empleados            from './pages/Empleados';
 import Notificaciones       from './pages/Notificaciones';
 import NotificationDetail   from './pages/NotificationDetail';
@@ -44,6 +45,7 @@ export default function App() {
 
         {/* Rutas Admin */}
         <Route path="reclutamiento" element={<ProtectedRoute adminOnly><Reclutamiento/></ProtectedRoute>} />
+        <Route path="postulantes" element={<ProtectedRoute adminOnly><Postulantes /></ProtectedRoute>}/>
         <Route path="empleados"     element={<ProtectedRoute adminOnly><Empleados/></ProtectedRoute>} />
         <Route path="notificaciones" element={<ProtectedRoute adminOnly><Notificaciones/></ProtectedRoute>} />
         <Route path="notificaciones/:id" element={<ProtectedRoute adminOnly><NotificationDetail/></ProtectedRoute>} />

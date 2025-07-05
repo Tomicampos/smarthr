@@ -1,3 +1,4 @@
+// src/components/Sidebar.jsx
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import API from '../api';
@@ -29,12 +30,15 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const token    = localStorage.getItem('token');
   const payload  = token ? decodePayload(token) : {};
-  const userId   = payload.id;
   const rawRole  = (payload.rol || payload.role || '').toLowerCase();
   const isAdmin  = rawRole === 'admin';
   const userRole = isAdmin ? 'Administrador' : 'Usuario';
 
-  // Formatea el nombre
+  // Para mantener activo y desplegado
+  const [activePath, setActivePath] = useState('/home');
+  const [openRec, setOpenRec]       = useState(false);
+
+  // Nombre formateado
   let nameRaw = payload.nombre
     || payload.name
     || payload.email?.split('@')[0]
@@ -45,12 +49,11 @@ export default function Sidebar() {
     .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join(' ');
 
-  // Estado de la URL del avatar
+  // Avatar
   const [avatarUrl, setAvatarUrl] = useState(null);
-
-   useEffect(() => {
-    if (!userId) return;
-    API.get(`/users/${userId}`)
+  useEffect(() => {
+    if (!payload.id) return;
+    API.get(`/users/${payload.id}`)
       .then(({ data }) => {
         if (data.avatar_url) {
           const origin = API.defaults.baseURL.replace(/\/api\/?$/, '');
@@ -58,27 +61,32 @@ export default function Sidebar() {
         }
       })
       .catch(() => {});
-  }, [userId]);
- 
+  }, [payload.id]);
 
+  // Ítems del menú
   const menuItems = [
-    { to: '/home', label: 'Inicio', icon: <AiFillHome /> },
-    isAdmin
-      ? { to: '/notificaciones', label: 'Notificaciones', icon: <FaBell /> }
-      : { to: '/mis-notificaciones', label: 'Notificaciones', icon: <FaBell /> },
+    { to: '/home',           label: 'Inicio',             icon: <AiFillHome /> },
+    { to: isAdmin ? '/notificaciones' : '/mis-notificaciones', label: 'Notificaciones', icon: <FaBell /> },
     ...(isAdmin
       ? [
-          { to: '/reclutamiento', label: 'Reclutamiento',   icon: <AiOutlineUserAdd /> },
-          { to: '/reclutamientos', label: 'Postulantes',   icon: <AiOutlineUserAdd /> },
-          { to: '/empleados',     label: 'Usuarios',        icon: <FaUsers /> },
-          { to: '/agenda',        label: 'Agenda',          icon: <FaCalendarAlt /> },
-          { to: '/documentacion', label: 'Documentación',   icon: <FaBook /> },
+          {
+            to: null,
+            label: 'Reclutamiento',
+            icon: <AiOutlineUserAdd />,
+            children: [
+              { to: '/reclutamiento',   label: 'Reclutamiento y Selección' },
+              { to: '/postulantes',     label: 'Postulantes' }
+            ]
+          },
+          { to: '/empleados',     label: 'Usuarios',      icon: <FaUsers /> },
+          { to: '/agenda',        label: 'Agenda',        icon: <FaCalendarAlt /> },
+          { to: '/documentacion', label: 'Documentación', icon: <FaBook /> },
         ]
       : [
           { to: '/mi-agenda',      label: 'Agenda',      icon: <FaCalendarAlt /> },
           { to: '/mis-documentos', label: 'Documentos',  icon: <FaBook /> },
           { to: '/perfil',         label: 'Mi Perfil',   icon: <FaUsers /> },
-        ]),
+        ])
   ];
 
   const supportItems = [
@@ -92,27 +100,71 @@ export default function Sidebar() {
     },
   ];
 
+  const handleClick = to => {
+    setActivePath(to);
+    // si clic en reclutamiento o sus hijos, mantenemos abierto
+    if (to === '/reclutamiento' || to === '/postulantes') {
+      setOpenRec(true);
+    } else {
+      setOpenRec(false);
+    }
+    if (to) navigate(to);
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-top">
-        <div className="sidebar-header">
-          <h2>SmartHR</h2>
-        </div>
+        <div className="sidebar-header"><h2>SmartHR</h2></div>
         <nav className="sidebar-menu">
-          {menuItems.map(({ to, label, icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                isActive ? 'menu-item active' : 'menu-item'
-              }
-            >
-              <span className="icon">{icon}</span>
-              <span className="label">{label}</span>
-            </NavLink>
+          {menuItems.map(item => (
+            item.children
+              ? (
+                <div
+                  key="reclutamiento"
+                  className={`menu-item has-children${openRec ? ' open' : ''}`}
+                  onMouseEnter={() => setOpenRec(true)}
+                  onMouseLeave={() => {
+                    if (![ '/reclutamiento', '/postulantes' ].includes(activePath)) {
+                      setOpenRec(false);
+                    }
+                  }}
+                >
+                  <div
+                    className={`parent-item${[ '/reclutamiento', '/postulantes' ].includes(activePath) ? ' active' : ''}`}
+                    onClick={() => setOpenRec(o => !o)}
+                  >
+                    <span className="icon">{item.icon}</span>
+                    <span className="label">{item.label}</span>
+                  </div>
+                  <div className="submenu">
+                    {item.children.map(child => (
+                      <div
+                        key={child.to}
+                        className={`submenu-item${activePath === child.to ? ' active' : ''}`}
+                        onClick={() => handleClick(child.to)}
+                      >
+                        <span className="icon"><AiOutlineUserAdd/></span>
+                        <span className="label">{child.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+              : (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={`menu-item${activePath === item.to ? ' active' : ''}`}
+                  onClick={() => handleClick(item.to)}
+                >
+                  <span className="icon">{item.icon}</span>
+                  <span className="label">{item.label}</span>
+                </NavLink>
+              )
           ))}
         </nav>
       </div>
+
       <div className="sidebar-footer">
         <div className="sidebar-separator" />
         <div className="sidebar-support">
@@ -123,18 +175,12 @@ export default function Sidebar() {
             </button>
           ))}
         </div>
-         <div className="sidebar-user">
+        <div className="sidebar-user">
           <div className="avatar">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Avatar"
-                className="sidebar-avatar-img"
-                onError={() => setAvatarUrl(null)}
-              />
-            ) : (
-              nameRaw.charAt(0)
-            )}
+            {avatarUrl
+              ? <img src={avatarUrl} alt="Avatar" onError={() => setAvatarUrl(null)} />
+              : nameRaw.charAt(0)
+            }
           </div>
           <div className="user-info">
             <div className="user-name">{nameRaw}</div>

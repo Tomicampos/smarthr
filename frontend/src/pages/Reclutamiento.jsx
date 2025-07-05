@@ -391,7 +391,7 @@ export default function Reclutamiento() {
           value={nuevoProc.puesto_id}
           onChange={e => setNuevoProc(np => ({ ...np, puesto_id: e.target.value ? Number(e.target.value) : '' }))}
         >
-          <option value="">— Selecciona un puesto —</option>
+          <option value="">Selecciona un puesto</option>
           {puestos.map(pu => <option key={pu.id} value={pu.id}>{pu.nombre}</option>)}
         </select>
         <label>Área</label>
@@ -400,7 +400,7 @@ export default function Reclutamiento() {
           value={nuevoProc.area_id}
           onChange={e => setNuevoProc(np => ({ ...np, area_id: e.target.value ? Number(e.target.value) : '' }))}
         >
-          <option value="">— Selecciona un área —</option>
+          <option value="">Selecciona un área</option>
           {areas.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
         </select>
         <label>Tipo de búsqueda</label>
@@ -434,10 +434,15 @@ export default function Reclutamiento() {
             value={nuevoPost.proceso_id}
             onChange={e => setNuevoPost(np => ({ ...np, proceso_id: e.target.value }))}
           >
-            <option value="">— Selecciona uno —</option>
-            {procesos.map(pr => (
-              <option key={pr.id} value={pr.id}>{pr.codigo} — {pr.puesto}</option>
-            ))}
+            <option value="">Selecciona uno</option>
+            {procesos
+              .filter(pr => pr.estado === 'En curso')
+              .map(pr => (
+                <option key={pr.id} value={pr.id}>
+                  {pr.codigo} — {pr.puesto}
+                </option>
+              ))
+            }
           </select>
           <label>Nombre</label>
           <input
@@ -500,9 +505,13 @@ export default function Reclutamiento() {
             )}
             {detallePost.linkedin && (
               <p><b>LinkedIn:</b>{' '}
-                <a href={detallePost.linkedin} target="_blank" rel="noopener noreferrer">
-                  {detallePost.linkedin}
-                </a>
+                <a
+               href={detallePost.linkedin}
+               target="_blank"
+               rel="noopener noreferrer"
+             >
+               Ver perfil
+             </a>
               </p>
             )}
             {detallePost.notas && <>
