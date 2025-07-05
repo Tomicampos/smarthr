@@ -886,27 +886,61 @@ const etapasDef = [
   'Desafío técnico',
   'Candidato seleccionado'
 ];
-
-// 1) Listar procesos
-app.get('/api/reclutamiento', async (req, res) => {
-  const [rows] = await pool.query(
-    `SELECT r.*, u.nombre AS responsable
+// 1 devuelve todas las áreas
+app.get('/api/areas', authMiddleware, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, nombre FROM areas ORDER BY nombre'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Error listando áreas:', err);
+    res.status(500).json({ error: 'No se pudieron cargar las áreas' });
+  }
+});
+// 1.1) Listar procesos
+app.get('/api/reclutamiento', authMiddleware, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT 
+         r.id,
+         r.codigo,
+         r.puesto,
+         r.area_id,
+         a.nombre AS area,
+         r.tipo_busqueda,
+         r.estado,
+         r.etapa_actual,
+         r.fecha_inicio,
+         r.fecha_fin,
+         u.nombre AS responsable
        FROM reclutamiento r
-       JOIN users u ON u.id = r.creado_por
-      ORDER BY r.fecha_inicio DESC`
-  );
-  res.json(rows);
+       JOIN areas a       ON a.id = r.area_id
+       JOIN users u       ON u.id = r.creado_por
+       ORDER BY r.fecha_inicio DESC`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Error listando procesos:', err);
+    res.status(500).json({ error: 'No se pudieron cargar los procesos' });
+  }
 });
 
 // 2) Crear proceso
-app.post('/api/reclutamiento', async (req, res) => {
-  const { codigo, puesto, area, tipo_busqueda } = req.body;
-  await pool.query(
-    `INSERT INTO reclutamiento (codigo, puesto, area, tipo_busqueda, creado_por)
-     VALUES (?,?,?,?,?)`,
-    [codigo, puesto, area, tipo_busqueda, req.user.id]
-  );
-  res.status(201).json({ ok: true });
+app.post('/api/reclutamiento', authMiddleware, async (req, res) => {
+  const { codigo, puesto, area_id, tipo_busqueda } = req.body;
+  try {
+    await pool.query(
+      `INSERT INTO reclutamiento 
+         (codigo, puesto, area_id, tipo_busqueda, creado_por)
+       VALUES (?,      ?,      ?,       ?,            ?)`,
+      [codigo, puesto, area_id, tipo_busqueda, req.user.id]
+    );
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error('Error creando proceso:', err);
+    res.status(500).json({ error: 'No se pudo crear el proceso' });
+  }
 });
 
 // 3) Eliminar proceso + postulantes

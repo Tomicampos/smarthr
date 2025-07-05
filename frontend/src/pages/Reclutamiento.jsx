@@ -4,8 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import API from '../api';
 import ModalGenerico from '../components/ModalGenerico';
-import { useToast } from '../components/ToastContext';
-import { FiChevronLeft, FiChevronRight, FiChevronDown } from 'react-icons/fi';
+import { useToast } from '../components/ToastContext'; import {   FiChevronLeft,   FiChevronRight,   FiChevronDown,   FiEye,   FiTrash2 } from 'react-icons/fi';
 import './Reclutamiento.css';
 
 const etapasDef = [
@@ -32,11 +31,16 @@ export default function Reclutamiento() {
   const [modalPost, setModalPost] = useState(false);
   const [modalVer, setModalVer] = useState(false);
   const [detallePost, setDetallePost] = useState(null);
+  const [areas, setAreas] = useState([]);
+
 
   const [nuevoProc, setNuevoProc] = useState({
-    codigo: '', puesto: '', area: '',
-    tipo_busqueda: 'Interna', estado: 'En curso'
-  });
+  codigo: '',
+  puesto: '',
+  area_id: '',
+  tipo_busqueda: 'Interna',
+  estado: 'En curso'
+});
   const [nuevoPost, setNuevoPost] = useState({
     proceso_id: '', nombre: '', email: '',
     telefono: '', cv_file: null, notas: ''
@@ -93,16 +97,25 @@ export default function Reclutamiento() {
     }, 50);
   }, [hash, procesos, procesosFiltrados]);
 
-    const guardarProc = async () => {
-    try {
-      await API.post('/reclutamiento', nuevoProc);
-      toast.success('Proceso creado');
-      setModalProc(false);
-      cargar();
-    } catch {
-      toast.error('No se pudo crear proceso');
-    }
-  };
+   const guardarProc = async () => {
+  if (!nuevoProc.area_id) {
+    toast.error('Debes seleccionar un área.');
+    return;
+  }
+  try {
+    await API.post('/reclutamiento', {
+      codigo: nuevoProc.codigo,
+      puesto: nuevoProc.puesto,
+      area_id: nuevoProc.area_id,
+      tipo_busqueda: nuevoProc.tipo_busqueda
+    });
+    toast.success('Proceso creado');
+    setModalProc(false);
+    cargar();
+  } catch {
+    toast.error('No se pudo crear proceso');
+  }
+};
   const eliminarProc = async id => {
     if (!window.confirm('¿Eliminar este proceso?')) return;
     try {
@@ -113,7 +126,15 @@ export default function Reclutamiento() {
       toast.error('No se pudo eliminar proceso');
     }
   };
+  
+  useEffect(() => {
+  cargar();
+  API.get('/areas')
+    .then(r => setAreas(r.data))
+    .catch(() => toast.error('No se pudieron cargar las áreas'));
+},
 
+   [cargar, toast]);
   const guardarPost = async () => {
     if (!nuevoPost.proceso_id) {
       toast.error('Debe seleccionar un proceso');
@@ -229,8 +250,10 @@ const eliminarPostulante = async (pid, uid) => {
                   <td>{p.estado}</td>
                   <td>{new Date(p.fecha_inicio).toLocaleDateString()}</td>
                   <td>{p.fecha_fin ? new Date(p.fecha_fin).toLocaleDateString() : '-'}</td>
-                  <td>
-                    <button className="btn-outline-red" onClick={() => eliminarProc(p.id)}>Eliminar</button>
+                   <td className="rec-col-actions">
+                   <button title="Eliminar proceso" onClick={() => eliminarProc(p.id)}>
+                     <FiTrash2 />
+                   </button>
                   </td>
                 </tr>
                 {expandidos[p.id] && (
@@ -287,25 +310,49 @@ const eliminarPostulante = async (pid, uid) => {
 
       
       <ModalGenerico abierto={modalProc} onClose={()=>setModalProc(false)} titulo="Nuevo Proceso">
-        <label>Código</label>
-        <input placeholder='Ingrese un Código'
-               value={nuevoProc.codigo}
-               onChange={e=>setNuevoProc(np=>({...np,codigo:e.target.value}))} />
-        <label>Puesto</label>
-        <input placeholder='Ingrese un Puesto'
-               value={nuevoProc.puesto}
-               onChange={e=>setNuevoProc(np=>({...np,puesto:e.target.value}))} />
-        <label>Área</label>
-        <input placeholder='Ingrese un Área'
-               value={nuevoProc.area}
-               onChange={e=>setNuevoProc(np=>({...np,area:e.target.value}))} />
-        <label>Tipo de búsqueda</label>
-        <select value={nuevoProc.tipo_busqueda}
-                onChange={e=>setNuevoProc(np=>({...np,tipo_busqueda:e.target.value}))}>
-          <option>Interna</option><option>Externa</option>
+       <label>Código</label>
+       <input
+         placeholder="Ingrese un Código"
+         value={nuevoProc.codigo}
+         onChange={e=>setNuevoProc(np=>({...np,codigo:e.target.value}))}
+       />
+     
+       <label>Puesto</label>
+       <input
+         placeholder="Ingrese un Puesto"
+         value={nuevoProc.puesto}
+         onChange={e=>setNuevoProc(np=>({...np,puesto:e.target.value}))}
+       />
+     
+       <label>Área</label>
+        <select
+        value={nuevoProc.area_id ?? ''}
+        onChange={e => {
+          const v = e.target.value;
+          setNuevoProc(np => ({
+            ...np,
+            area_id: v === '' ? null : Number(v)
+          }));
+        }}
+     >
+         <option value="">— Selecciona un área —</option>
+         {areas.map(a => (
+           <option key={a.id} value={a.id}>
+             {a.nombre}
+           </option>
+         ))}
+       </select>
+     
+       <label>Tipo de búsqueda</label>
+       <select
+          value={nuevoProc.tipo_busqueda}
+          onChange={e=>setNuevoProc(np=>({...np,tipo_busqueda:e.target.value}))}
+        >
+          <option>Interna</option>
+          <option>Externa</option>
         </select>
+      
         <div className="modal-footer">
-          
           <button className="btn-primary" onClick={guardarProc}>Guardar</button>
         </div>
       </ModalGenerico>
@@ -357,19 +404,23 @@ const eliminarPostulante = async (pid, uid) => {
 function PostulantesList({ procesoId, onAvanzar, onVer, onEliminar }) {
   const toast = useToast();
   const [lista, setLista] = useState([]);
+
   useEffect(() => {
     let m = true;
     API.get(`/reclutamiento/${procesoId}/postulantes`)
-      .then(r=>m&&setLista(r.data))
-      .catch(()=>toast.error('Error al cargar postulantes'));
-    return ()=>{ m = false; };
+      .then(r => m && setLista(r.data))
+      .catch(() => toast.error('Error al cargar postulantes'));
+    return () => { m = false };
   }, [procesoId, toast]);
 
   return (
     <table className="post-table">
       <thead>
         <tr>
-          <th>Nombre</th><th>Email</th><th>Etapa</th><th>Acción</th><th>Ver</th><th>Eliminar</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Etapa</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -378,36 +429,37 @@ function PostulantesList({ procesoId, onAvanzar, onVer, onEliminar }) {
             <td>{u.nombre}</td>
             <td>{u.email}</td>
             <td>{etapasDef[u.etapa_actual - 1]}</td>
-            <td>
+            <td className="rec-col-actions">
+              {/* Avanzar */}
               <button
-                className="btn-outline-red"
+                title="Avanzar etapa"
                 onClick={() => onAvanzar(procesoId, u.id)}
                 disabled={u.etapa_actual >= etapasDef.length}
               >
-                Avanzar
+                <FiChevronRight />
               </button>
-            </td>
-            <td>
+              {/* Ver detalle */}
               <button
-                className="btn-outline-red"
+                title="Ver detalle"
                 onClick={() => onVer(procesoId, u.id)}
               >
-                Ver
+                <FiEye />
               </button>
-            </td>
-            <td>
+              {/* Eliminar postulante */}
               <button
-                className="btn-outline-red"
+                title="Eliminar postulante"
                 onClick={() => onEliminar(procesoId, u.id)}
               >
-                Eliminar
+                <FiTrash2 />
               </button>
             </td>
           </tr>
         ))}
         {!lista.length && (
           <tr>
-            <td colSpan="6" className="no-data">No hay postulantes</td>
+            <td colSpan="4" className="no-data">
+              No hay postulantes
+            </td>
           </tr>
         )}
       </tbody>

@@ -166,6 +166,7 @@
   padding:1rem; margin-top:1rem;
   max-height:300px;          /* ajusta según necesites */
   overflow-y:auto;           /* scroll sólo vertical */
+  text-align: left;
 }
 /* Timeline */
 .timeline {
@@ -248,14 +249,17 @@
   cursor: pointer;
   transition: background 0.2s ease;
 }
-.btn-outline-red {
-  background: transparent;
-  color: #dc2626;
-  border: 1px solid #dc2626;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
+.rec-col-actions button {
+  background: none;
+  border: none;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  font-size: 1.2rem;
+  margin: 0 0.25rem;
+  color: #374151;         /* gris oscuro */
+  transition: color 0.2s;
+}
+.rec-col-actions button:hover {
+  color: #dc2626;         /* rojo */
 }
 .btn-red:hover,
 .btn-primary:hover,

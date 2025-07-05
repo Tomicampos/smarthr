@@ -1,7 +1,7 @@
-// src/pages/Agenda.jsx
 import React, { useState, useEffect } from 'react';
 import API from '../api';
 import './Agenda.css';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const MESES = [
   'Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -20,7 +20,7 @@ export default function Agenda() {
   const [evtTitulo, setEvtTitulo]       = useState('');
   const [evtFecha, setEvtFecha]         = useState('');
 
-  // 1) recalcular blancos y días en mes/año
+  // recalcular blancos y días en mes/año
   useEffect(() => {
     const último = new Date(año, mes + 1, 0).getDate();
     const primer = new Date(año, mes, 1).getDay();
@@ -28,11 +28,10 @@ export default function Agenda() {
     setDiasMes(Array.from({ length: último }, (_, i) => i + 1));
   }, [mes, año]);
 
-  // 2) traer Google Calendar + feriados argentinos
+  // traer Google Calendar + feriados argentinos
   useEffect(() => {
     async function fetchAll() {
       try {
-        // a) eventos de Google Calendar
         const { data: agendaData } = await API.get('/agenda');
         const evAgenda = Array.isArray(agendaData)
           ? agendaData.map(e => {
@@ -46,8 +45,6 @@ export default function Agenda() {
             })
           : [];
 
-        // b) feriados argentinos desde Nager API
-        //    docs: https://date.nager.at/swagger/index.html
         const respF = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${año}/AR`);
         const feriadosJson = await respF.json();
         const evFeriados = Array.isArray(feriadosJson)
@@ -59,7 +56,6 @@ export default function Agenda() {
             }))
           : [];
 
-        // c) combinamos y guardamos
         setEventos([...evAgenda, ...evFeriados]);
       } catch (err) {
         console.error('Error cargando agenda o feriados:', err);
@@ -91,19 +87,58 @@ export default function Agenda() {
     setModalAbierto(false);
   }
 
+  // navegadores de mes cruzando año
+  const prevMonth = () => {
+    if (mes > 0) setMes(m => m - 1);
+    else {
+      setMes(11);
+      setAño(a => a - 1);
+    }
+  };
+  const nextMonth = () => {
+    if (mes < 11) setMes(m => m + 1);
+    else {
+      setMes(0);
+      setAño(a => a + 1);
+    }
+  };
+  const volverHoy = () => {
+    setMes(hoy.getMonth());
+    setAño(hoy.getFullYear());
+  };
+
   return (
     <div className="agenda-container">
       <div className="agenda-card">
         <h1 className="agenda-title">Mi Agenda</h1>
 
         <header className="agenda-header">
-          <div>
+          <div className="agenda-header-left">
             <span className="agenda-mes">{MESES[mes]}</span>{' '}
             <span className="agenda-año">{año}</span>
           </div>
-          <div className="agenda-nav">
-            <button onClick={() => mes > 0 && setMes(m => m - 1)} disabled={mes === 0}>‹</button>
-            <button onClick={() => mes < 11 && setMes(m => m + 1)} disabled={mes === 11}>›</button>
+          <div className="agenda-header-right">
+            <button
+              className="arrow-btn"
+              onClick={prevMonth}
+              title="Mes anterior"
+            >
+              <FiChevronLeft />
+            </button>
+            <button
+              className="emp-btn"
+              onClick={volverHoy}
+              title="Hoy"
+            >
+              Hoy
+            </button>
+            <button
+              className="arrow-btn"
+              onClick={nextMonth}
+              title="Mes siguiente"
+            >
+              <FiChevronRight />
+            </button>
           </div>
         </header>
 
@@ -117,7 +152,6 @@ export default function Agenda() {
           ))}
 
           {diasMes.map(d => {
-            // filtramos eventos + feriados para este día
             const evs = eventos.filter(e =>
               e.fecha.getFullYear() === año &&
               e.fecha.getMonth()      === mes  &&
@@ -131,13 +165,23 @@ export default function Agenda() {
                 >
                   {d}
                 </div>
-                <div className="agenda-eventos">
-                  {evs.map((e, i) => (
-                    <div key={i} className={`evt evt-${e.tema}`}>
-                      {e.titulo}
-                    </div>
-                  ))}
-                </div>
+              <div className="agenda-eventos">
+  {evs.map((e, i) => {
+    const hh = e.fecha.getHours().toString().padStart(2, '0');
+    const mm = e.fecha.getMinutes().toString().padStart(2, '0');
+    const label = `${hh}:${mm} - ${e.titulo}`;
+    return (
+      <div key={i} className="evt-wrapper">
+        <div className={`evt evt-${e.tema}`}>
+          {label}
+        </div>
+        <div className="evt-tooltip">
+          {label}
+        </div>
+      </div>
+    );
+  })}
+</div>
               </div>
             );
           })}

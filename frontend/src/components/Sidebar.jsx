@@ -69,6 +69,7 @@ export default function Sidebar() {
     ...(isAdmin
       ? [
           { to: '/reclutamiento', label: 'Reclutamiento',   icon: <AiOutlineUserAdd /> },
+          { to: '/reclutamientos', label: 'Postulantes',   icon: <AiOutlineUserAdd /> },
           { to: '/empleados',     label: 'Usuarios',        icon: <FaUsers /> },
           { to: '/agenda',        label: 'Agenda',          icon: <FaCalendarAlt /> },
           { to: '/documentacion', label: 'Documentación',   icon: <FaBook /> },
