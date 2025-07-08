@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import './Toast.css';
 
 const ToastContext = createContext();
@@ -6,9 +6,10 @@ export const useToast = () => useContext(ToastContext);
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
+  const counter = useRef(0);
 
   const addToast = useCallback((type, message) => {
-    const id = Date.now();
+    const id = `${Date.now()}-${counter.current++}`;
     setToasts(t => [...t, { id, type, message }]);
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3000);
   }, []);

@@ -1237,8 +1237,11 @@ app.get('/api/notificaciones/:id', async (req, res) => {
 // ————————————————
 // CREAR + ENVIAR (con historial y plantillas)
 // ————————————————
+
+// backend/index.js (reemplaza tu actual POST /api/notificaciones por esto)
+
 app.post('/api/notificaciones', async (req, res) => {
-  const { asunto, cuerpo } = req.body;
+  const { asunto, cuerpo, destinatarios } = req.body;
   const usuarioId = req.user.id;
 
   // 1) Insertar cabecera
@@ -1248,31 +1251,32 @@ app.post('/api/notificaciones', async (req, res) => {
     [asunto, cuerpo, usuarioId]
   );
 
-  // 2) Obtener todos los empleados
+  // 2) Tomar sólo los IDs que llegó del frontend
+  //    destinatarios es un array [{ id, type }, …]
+  const empIds = destinatarios.map(d => d.id);
+  // Validamos que existan esos usuarios
   const [empleados] = await pool.query(
-    `SELECT id, nombre, email FROM users`
+    `SELECT id, nombre, email
+     FROM users
+     WHERE id IN (?)`,
+    [empIds]
   );
 
-  // 3) Insertar destinatarios en BD
-  const valores = empleados.map(e => [insertId, e.id]);
-  await pool.query(
-    `INSERT INTO notificaciones_destinatarios
-       (notificacion_id, empleado_id)
-     VALUES ?`,
-    [valores]
-  );
+  // 3) Insertar únicamente esos destinatarios
+  if (empleados.length) {
+    const valores = empleados.map(e => [insertId, e.id]);
+    await pool.query(
+      `INSERT INTO notificaciones_destinatarios
+         (notificacion_id, empleado_id)
+       VALUES ?`,
+      [valores]
+    );
+  }
 
-  // 4) Enviar mails sólo a quienes tengan un email válido
+  // 4) Envío de emails a sólo los seleccionados
   try {
     for (let emp of empleados) {
-      if (!emp.email || !emp.email.includes('@')) {
-        console.warn(
-          `⚠️ Usuario ${emp.id} (“${emp.nombre}”) con email inválido (“${emp.email}”), se omite.`
-        );
-        // también podrías marcar en BD como 'sin dirección'
-        continue;
-      }
-
+      if (!emp.email?.includes('@')) continue;
       await enviarNotificacion({
         to: emp.email,
         asunto,
@@ -1281,8 +1285,6 @@ app.post('/api/notificaciones', async (req, res) => {
           .replace(/{{nombre}}/g, emp.nombre)
           .replace(/{{fecha}}/g, new Date().toLocaleDateString())
       });
-
-      // Marcar como enviado
       await pool.query(
         `UPDATE notificaciones_destinatarios
            SET estado='enviado', enviado_en=NOW()
@@ -1290,13 +1292,13 @@ app.post('/api/notificaciones', async (req, res) => {
         [insertId, emp.id]
       );
     }
-
-    return res.status(201).json({ id: insertId });
+    res.status(201).json({ id: insertId });
   } catch (err) {
-    console.error('❌ Falló el envío general:', err);
-    return res.status(500).json({ error: 'Error enviando notificaciones' });
+    console.error('Error enviando notificaciones:', err);
+    res.status(500).json({ error: 'Error enviando notificaciones' });
   }
 });
+
 
 // ─── Ruta para eliminar una notificación ────────────────────────
 app.delete('/api/notificaciones/:id', async (req, res) => {
@@ -1321,6 +1323,25 @@ app.delete('/api/notificaciones/:id', async (req, res) => {
   } catch (err) {
     console.error('Error borrando notificación:', err);
     res.status(500).json({ error: 'Error interno al eliminar notificación' });
+  }
+});
+
+
+// ------------------------------------------------------------------
+// API Postulantes
+// ------------------------------------------------------------------
+// GET /api/postulantes — devuelve id, nombre y email
+app.get('/api/postulantes', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, nombre, email
+       FROM postulantes
+       ORDER BY nombre`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Error al cargar postulantes:', err);
+    res.status(500).json({ error: 'Error interno' });
   }
 });
 

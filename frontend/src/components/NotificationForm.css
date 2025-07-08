@@ -1,0 +1,42 @@
+/* src/components/NotificationForm.css */
+
+.notif-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.notif-card label {
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+.notif-card input,
+.notif-card textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+}
+.notif-card textarea {
+  resize: none;
+}
+.notif-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.notif-actions button {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.notif-actions button:hover {
+  background: #b91c1c;
+}

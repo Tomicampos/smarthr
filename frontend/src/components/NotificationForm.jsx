@@ -1,20 +1,38 @@
 import React, { useState } from 'react';
-import { useToast } from '../components/ToastContext';
+import { useToast } from './ToastContext';
 import API from '../api';
-import '../pages/Notificaciones.css';
+import './NotificationForm.css';
 
-export default function NotificationForm({ onEnviado }) {
+export default function NotificationForm({
+  destinatarios,
+  setDestinatarios,
+  onEnviado
+}) {
   const toast = useToast();
   const [asunto, setAsunto] = useState('');
   const [cuerpo, setCuerpo] = useState('');
-  const [todos, setTodos] = useState(true);
 
-  const enviar = async () => {
+  const handleSubmit = async e => {
+    e.preventDefault();
+    if (!asunto.trim() || !cuerpo.trim() || !destinatarios.length) {
+      toast.error('Asunto, cuerpo y al menos un destinatario son obligatorios.');
+      return;
+    }
+    // construyo payload usando el key "tipo-id"
+    const payload = {
+      asunto,
+      cuerpo,
+      destinatarios: destinatarios.map(key => {
+        const [type, id] = key.split('-');
+        return { id: Number(id), type };
+      })
+    };
     try {
-      await API.post('/notificaciones', { asunto, cuerpo });
+      await API.post('/notificaciones', payload);
       toast.success('Notificación enviada');
       setAsunto('');
       setCuerpo('');
+      setDestinatarios([]);
       onEnviado();
     } catch {
       toast.error('Error al enviar notificación');
@@ -22,32 +40,25 @@ export default function NotificationForm({ onEnviado }) {
   };
 
   return (
-    <div className="notif-card">
-      <h3>Nueva Notificación</h3>
-
+    <form className="notif-card" onSubmit={handleSubmit}>
       <label>Asunto</label>
       <input
         type="text"
         value={asunto}
         onChange={e => setAsunto(e.target.value)}
+        className="notif-input"
       />
 
-      <label>
-        Cuerpo 
-      </label>
+      <label>Mensaje</label>
       <textarea
-        rows="5"
         value={cuerpo}
         onChange={e => setCuerpo(e.target.value)}
+        className="notif-textarea"
       />
 
-      
-
       <div className="notif-actions">
-        <button className="btn-outline-red" onClick={enviar}>
-          Enviar
-        </button>
+        <button type="submit">Enviar</button>
       </div>
-    </div>
+    </form>
   );
 }

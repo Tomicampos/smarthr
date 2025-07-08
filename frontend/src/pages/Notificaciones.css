@@ -1,133 +1,269 @@
-.notifs-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.5rem;
-}
-.notif-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  display: flex;
-  flex-direction: column;
+/* reset del scroll */
+body, html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-.notif-card h3 {
-  margin-top: 0;
-  font-size: 1.25rem;
+/* Card principal */
+.notif-main-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04),
+              0 6px 12px rgba(0,0,0,0.08),
+              0 12px 24px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 100px);
+  gap: 1rem;
+}
+
+/* Header */
+.notif-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.75rem;
+}
+.notif-card-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
   color: #dc2626;
   font-weight: normal;
 }
 
-.notif-card label {
-  display: block;
-  margin-top: 1rem;
-  font-size: 0.9rem;
-  color: #4b5563;
+/* Controles modo + destinatarios */
+.notif-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.notif-card input,
-.notif-card textarea {
+/* select custom */
+.select-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 200px;
+}
+.notif-mode-select {
   width: 100%;
-  padding: 0.5rem;
-  margin-top: 0.25rem;
-  border: 1px solid #d1d5db;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.95rem;
+  border: 1px solid #e5e7eb;
   border-radius: 6px;
-  box-sizing: border-box;
-  resize: none;
-  outline: none;
-
+  background: #fafafa;
+  appearance: none;
+  cursor: pointer;
+}
+.select-icon {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6b7280;
 }
 
+/* dropdown destinatarios */
+.notif-recipients-wrapper {
+  position: relative;
+}
+.notif-recipients-button {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.95rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fafafa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.notif-recipients-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 240px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: #fbfbfb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 100;
+}
+.ms-title {
+  text-align: center;
+  padding: 0.5rem;
+  font-weight: 500;
+  color: #555;
+  background: #f0f0f0;
+  border-bottom: 1px solid #e5e7eb;
+}
+.ms-search {
+  width: calc(100% - 1rem);
+  margin: 0.5rem;
+  padding: 0.4rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.9rem;
+}
+.ms-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+}
+.ms-option:hover {
+  background: #f3f3f3;
+}
+.ms-option input[type="checkbox"] {
+  accent-color: #dc2626;
+}
+.ms-empty {
+  padding: 0.75rem;
+  text-align: center;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+/* Subheader */
+.notif-subheader {
+  padding-top: 0.5rem;
+}
+.notif-subtitle {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #dc2626;
+}
+
+/* Cuerpo */
+.notif-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 0.5rem;
+}
+
+/* Formulario interno sin sombra */
+.notif-card {
+  background: transparent;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Inputs y textarea con foco rojo */
+.notif-input,
+.notif-textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fafafa;
+  box-sizing: border-box;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.notif-input:focus,
+.notif-textarea:focus {
+  border-color: #dc2626;
+}
+.notif-textarea {
+  height: 200px;
+  resize: none;
+}
+
+/* Botón Enviar */
 .notif-actions {
-  margin-top: 1.5rem;
+  margin-top: auto;
   text-align: right;
 }
-
-.notif-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
+.notif-actions button {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.notif-actions button:hover {
+  background: #b91c1c;
 }
 
+/* Histórico tabla (idéntico a Documentación) */
+.notif-table-wrapper {
+  overflow: visible !important;
+  height: auto !important;
+}
+.notif-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
 .notif-table th,
 .notif-table td {
   padding: 0.75rem 1rem;
+  font-size: 0.9rem;
   text-align: center;
-  border-bottom: 1px solid #f3f4f6;
 }
-
 .notif-table thead {
-  background: #f9fafb;
+  background: #f7f7f7;
 }
-.notif-card .notif-table thead th {
+.notif-table th {
   color: #ef4444;
+  font-weight: 600;
 }
-
-.btn-outline-red {
-  background: transparent;
-  color: #dc2626;
-  border: 1px solid #dc2626;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
+.notif-table tbody tr:nth-child(even) { background: #ffffff; }
+.notif-table tbody tr:nth-child(odd)  { background: #fafafa;   }
+.notif-table tbody tr:hover            { background: #f2f2f2;   }
+.empty-row td { background: transparent; }
+.notif-col-actions button {
+  background: none;
+  border: none;
   cursor: pointer;
+  font-size: 1.2rem;
+  margin: 0 0.25rem;
+  color: #555;
+  transition: color 0.2s;
 }
-
-.btn-outline-red:hover {
-  background: #dc2626;
-  color: #fff;
+.notif-col-actions button:hover {
+  color: #dc2626;
 }
-
-/* Paginación para NotificationList */
-
-
 .notif-pagination {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 0;
-  margin-top: 1.5rem;
-}
-
-/* Estilizamos la lista de páginas como fila horizontal */
-.notif-pagination ul {
-  list-style: none;
-  display: flex;
   gap: 0.5rem;
-  margin: 0;
-  padding: 0;
+  margin-top: 1rem;
 }
-
-.notif-pagination ul li {
-  margin: 0;
-}
-
-/* Botones de página */
 .notif-pagination button {
-  background: #fff;
-  border: 1px solid #dc2626;
-  color: #dc2626;
+  background: none;
+  border: 1px solid #e5e7eb;
+  color: #555;
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.9rem;
   transition: background 0.2s, color 0.2s;
 }
-
-.notif-pagination button[disabled] {
+.notif-pagination button.active {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+}
+.notif-pagination button:hover:not(:disabled) {
+  background: #ef4444;
+  color: #fff;
+}
+.notif-pagination button:disabled {
   opacity: 0.5;
   cursor: default;
-}
-
-.notif-pagination button:not([disabled]):hover {
-  background: #dc2626;
-  color: #fff;
-}
-
-/* Página activa */
-.notif-pagination button.active {
-  background: #dc2626;
-  color: #fff;
 }
