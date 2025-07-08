@@ -1067,24 +1067,37 @@ app.post(
 
 
 // 7) Avanzar etapa postulante
+// 7) Avanzar etapa postulante
 app.post(
   '/api/reclutamiento/:pid/postulantes/:uid/avanzar',
   async (req, res) => {
     const { pid, uid } = req.params;
     const [[p]] = await pool.query(
-      `SELECT etapa_actual FROM postulantes WHERE id=? AND proceso_id=?`,
+      `SELECT etapa_actual FROM postulantes WHERE id = ? AND proceso_id = ?`,
       [uid, pid]
     );
     if (!p) return res.status(404).end();
+
+    const TOTAL_ETAPAS = 6;          // Ajusta según tu definición real
     let nueva = p.etapa_actual + 1;
-    if (nueva > etapasDef.length) nueva = etapasDef.length;
+    if (nueva > TOTAL_ETAPAS) nueva = TOTAL_ETAPAS;
+
+    // Si llega a la última etapa, fijamos fecha_final
+    const fechaFinalClause = nueva === TOTAL_ETAPAS
+      ? ', fecha_final = NOW()'
+      : '';
+
     await pool.query(
-      `UPDATE postulantes SET etapa_actual = ? WHERE id = ?`,
+      `UPDATE postulantes
+         SET etapa_actual = ?${fechaFinalClause}
+       WHERE id = ?`,
       [nueva, uid]
     );
+
     res.json({ ok: true });
   }
 );
+
 
 // 8) Eliminar postulante
 app.delete(
@@ -1344,6 +1357,102 @@ app.get('/api/postulantes', async (req, res) => {
     res.status(500).json({ error: 'Error interno' });
   }
 });
+
+// GET /api/metrics/postulantes
+app.get('/api/metrics/postulantes', async (req, res) => {
+  try {
+    const TOTAL_ETAPAS = 6
+    const [[{ total }]] = await pool.query(
+      `SELECT COUNT(*) AS total FROM postulantes`
+    );
+
+    const [[{ en_proceso }]] = await pool.query(
+      `SELECT COUNT(*) AS en_proceso
+       FROM postulantes
+       WHERE etapa_actual >= 1
+         AND etapa_actual < ?`,
+      [TOTAL_ETAPAS]
+    );
+
+    const [[{ finalizados }]] = await pool.query(
+      `SELECT COUNT(*) AS finalizados
+       FROM postulantes
+       WHERE etapa_actual = ?`,
+      [TOTAL_ETAPAS]
+    );
+
+    // Promedio de días entre creación y fecha_final
+    const [[{ promedio_dias }]] = await pool.query(
+      `SELECT AVG(DATEDIFF(fecha_final, fecha_creacion)) AS promedio_dias
+       FROM postulantes
+       WHERE fecha_final IS NOT NULL`
+    );
+
+    const tasa = total > 0
+      ? +((finalizados / total) * 100).toFixed(1)
+      : 0;
+
+    res.json({ total, en_proceso, finalizados, promedio_dias, tasa });
+  } catch (err) {
+    console.error('Error calculando métricas de postulantes:', err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+
+
+// ──────────────────────────────────────────────────────────────
+// GET /api/metrics/postulantes
+// ──────────────────────────────────────────────────────────────
+
+app.get('/api/metrics/postulantes', authMiddleware, async (req, res) => {
+  try {
+    // Define aquí cuántas etapas totales tienes en tu flujo
+    const TOTAL_ETAPAS = 6;
+
+    // 1) total de postulantes
+    const [[{ total }]] = await pool.query(
+      `SELECT COUNT(*) AS total FROM postulantes`
+    );
+
+    // 2) en proceso: etapa_actual >= 1 y < TOTAL_ETAPAS
+    const [[{ en_proceso }]] = await pool.query(
+      `SELECT COUNT(*) AS en_proceso
+       FROM postulantes
+       WHERE etapa_actual >= 1
+         AND etapa_actual < ?`,
+      [TOTAL_ETAPAS]
+    );
+
+    // 3) finalizados: etapa_actual == TOTAL_ETAPAS
+    const [[{ finalizados }]] = await pool.query(
+      `SELECT COUNT(*) AS finalizados
+       FROM postulantes
+       WHERE etapa_actual = ?`,
+      [TOTAL_ETAPAS]
+    );
+
+    // 4) promedio de días desde la creación hasta que llegan a la etapa final
+    //    (a falta de un campo fecha_final, usamos NOW() para aproximar el tiempo transcurrido)
+    const [[{ promedio_dias }]] = await pool.query(
+      `SELECT AVG(DATEDIFF(NOW(), fecha_creacion)) AS promedio_dias
+       FROM postulantes
+       WHERE etapa_actual = ?`,
+      [TOTAL_ETAPAS]
+    );
+
+    // 5) tasa de conversión
+    const tasa = total > 0
+      ? +((finalizados / total) * 100).toFixed(1)
+      : 0;
+
+    res.json({ total, en_proceso, finalizados, promedio_dias, tasa });
+  } catch (err) {
+    console.error('Error al cargar métricas postulantes:', err);
+    res.status(500).json({ error: 'No se pudieron cargar métricas' });
+  }
+});
+
 
 // ------------------------------------------------------------------
 //  NOTIFICACIONES ROL EMPLEADO

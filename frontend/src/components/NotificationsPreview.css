@@ -1,6 +1,6 @@
 /* Card base */
 .notif-card {
-  background: #fff;
+  background: #fff !important;
   border-radius: 16px !important;
   padding: 1rem;
   box-shadow:
@@ -21,6 +21,7 @@
   margin: 0;
   font-size: 1.1rem;      /* mismo tamaño que ProgresoPostulantes */
   font-weight: 400;       /* sin negrita */
+  color: #ef4444;
   
 }
 

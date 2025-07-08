@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import NotificationsPreview from '../components/NotificationsPreview';
 import ProgresoPostulantes from '../components/ProgresoPostulantes';
+import PostulantesMetrics from '../components/PostulantesMetrics';
 import Cronograma from '../components/Cronograma';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
@@ -35,8 +36,11 @@ export default function Dashboard() {
       <div className="dashboard-left">
         <NotificationsPreview />
 
-        {isAdmin ? (
-          <ProgresoPostulantes />
+               {isAdmin ? (
+          <>
+            <PostulantesMetrics />
+            <ProgresoPostulantes />
+          </>
         ) : (
           <div className="empty-state">
             <h3>¿Qué te gustaría hacer hoy?</h3>
