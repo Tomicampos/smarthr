@@ -1,0 +1,86 @@
+.week-view {
+  font-family: 'Inter', sans-serif;
+  background-color: #ffffff;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.week-days-header {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  text-align: center;
+  font-weight: bold;
+  padding: 0.5rem 0;
+  color: #444;
+  border-bottom: 1px solid #ddd;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  position: relative;
+  background-color: #fff;
+}
+
+.hora-columna {
+  display: flex;
+  flex-direction: column;
+}
+
+.hora-etiqueta {
+  height: 50px;
+  font-size: 0.8rem;
+  text-align: right;
+  padding-right: 0.5rem;
+  color: #666;
+  border-top: 1px solid #eee;
+}
+.dia-columna {
+  position: relative;
+  border-left: 1px solid #eee;
+}
+
+.dia-columna:not(:last-child) {
+  border-right: 1px solid #eee;
+}
+
+.dia-columna::before {
+  content: '';
+  display: block;
+  height: 1200px;
+}
+
+.evento-celda {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  background-color: #0284c7;
+  color: #fff;
+  padding: 2px 4px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.dia-columna {
+  position: relative;
+  border-left: 1px solid #eee;
+}
+
+.dia-columna::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(50px * 24);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 49px,
+    #eee 49px,
+    #eee 50px
+  );
+  z-index: 0;
+}

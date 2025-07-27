@@ -1,6 +1,9 @@
+// src/pages/Agenda.jsx
 import React, { useState, useEffect } from 'react';
 import API from '../api';
 import './Agenda.css';
+import DayView from './DayView';
+import WeekView from './WeekView';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const MESES = [
@@ -11,16 +14,17 @@ const DIAS_SEMANA = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
 export default function Agenda() {
   const hoy = new Date();
-  const [mes, setMes]       = useState(hoy.getMonth());
-  const [año, setAño]       = useState(hoy.getFullYear());
-  const [diasMes, setDiasMes]   = useState([]);
-  const [blancos, setBlancos]   = useState([]);
-  const [eventos, setEventos]   = useState([]);
+  const [mes, setMes]             = useState(hoy.getMonth());
+  const [año, setAño]             = useState(hoy.getFullYear());
+  const [fechaBase, setFechaBase] = useState(hoy);
+  const [vista, setVista]         = useState("mes");
+  const [diasMes, setDiasMes]     = useState([]);
+  const [blancos, setBlancos]     = useState([]);
+  const [eventos, setEventos]     = useState([]);
   const [modalAbierto, setModalAbierto] = useState(false);
-  const [evtTitulo, setEvtTitulo]       = useState('');
-  const [evtFecha, setEvtFecha]         = useState('');
+  const [evtTitulo, setEvtTitulo] = useState('');
+  const [evtFecha, setEvtFecha]   = useState('');
 
-  // recalcular blancos y días en mes/año
   useEffect(() => {
     const último = new Date(año, mes + 1, 0).getDate();
     const primer = new Date(año, mes, 1).getDay();
@@ -28,7 +32,6 @@ export default function Agenda() {
     setDiasMes(Array.from({ length: último }, (_, i) => i + 1));
   }, [mes, año]);
 
-  // traer Google Calendar + feriados argentinos
   useEffect(() => {
     async function fetchAll() {
       try {
@@ -64,19 +67,16 @@ export default function Agenda() {
     fetchAll();
   }, [año]);
 
-  // marca el día de hoy
   function esHoy(d) {
     const dd = new Date(año, mes, d);
     return dd.toDateString() === new Date().toDateString();
   }
 
-  // abre modal para agregar evento local
   function abrirModal(d) {
     setEvtFecha(new Date(año, mes, d).toDateString());
     setModalAbierto(true);
   }
 
-  // guarda evento local (no persiste en backend)
   function guardarEvento() {
     if (!evtTitulo) return;
     setEventos([
@@ -87,105 +87,110 @@ export default function Agenda() {
     setModalAbierto(false);
   }
 
-  // navegadores de mes cruzando año
-  const prevMonth = () => {
-    if (mes > 0) setMes(m => m - 1);
-    else {
-      setMes(11);
-      setAño(a => a - 1);
+  const prev = () => {
+    const nueva = new Date(fechaBase);
+    if (vista === "semana") {
+      nueva.setDate(nueva.getDate() - 7);
+    } else if (vista === "dia") {
+      nueva.setDate(nueva.getDate() - 1);
+    } else {
+      if (mes > 0) setMes(m => m - 1);
+      else {
+        setMes(11);
+        setAño(a => a - 1);
+      }
+      return;
     }
+    setFechaBase(nueva);
+    setMes(nueva.getMonth());
+    setAño(nueva.getFullYear());
   };
-  const nextMonth = () => {
-    if (mes < 11) setMes(m => m + 1);
-    else {
-      setMes(0);
-      setAño(a => a + 1);
+
+  const next = () => {
+    const nueva = new Date(fechaBase);
+    if (vista === "semana") {
+      nueva.setDate(nueva.getDate() + 7);
+    } else if (vista === "dia") {
+      nueva.setDate(nueva.getDate() + 1);
+    } else {
+      if (mes < 11) setMes(m => m + 1);
+      else {
+        setMes(0);
+        setAño(a => a + 1);
+      }
+      return;
     }
+    setFechaBase(nueva);
+    setMes(nueva.getMonth());
+    setAño(nueva.getFullYear());
   };
+
   const volverHoy = () => {
+    const hoy = new Date();
     setMes(hoy.getMonth());
     setAño(hoy.getFullYear());
+    setFechaBase(hoy);
   };
 
   return (
     <div className="agenda-container">
       <div className="agenda-card">
         <h1 className="agenda-title">Mi Agenda</h1>
-
         <header className="agenda-header">
           <div className="agenda-header-left">
             <span className="agenda-mes">{MESES[mes]}</span>{' '}
             <span className="agenda-año">{año}</span>
           </div>
           <div className="agenda-header-right">
-            <button
-              className="arrow-btn"
-              onClick={prevMonth}
-              title="Mes anterior"
-            >
-              <FiChevronLeft />
-            </button>
-            <button
-              className="emp-btn"
-              onClick={volverHoy}
-              title="Hoy"
-            >
-              Hoy
-            </button>
-            <button
-              className="arrow-btn"
-              onClick={nextMonth}
-              title="Mes siguiente"
-            >
-              <FiChevronRight />
-            </button>
+            <select className="agenda-select" value={vista} onChange={e => setVista(e.target.value)}>
+              <option value="mes">Mes</option>
+              <option value="semana">Semana</option>
+              <option value="dia">Día</option>
+            </select>
+            <button className="arrow-btn" onClick={prev}><FiChevronLeft /></button>
+            <button className="emp-btn" onClick={volverHoy}>Hoy</button>
+            <button className="arrow-btn" onClick={next}><FiChevronRight /></button>
           </div>
         </header>
 
-        <div className="agenda-grid">
-          {DIAS_SEMANA.map(d => (
-            <div key={d} className="agenda-dia-nombre">{d}</div>
-          ))}
-
-          {blancos.map((_, i) => (
-            <div key={`b${i}`} className="agenda-celda vacia" />
-          ))}
-
-          {diasMes.map(d => {
-            const evs = eventos.filter(e =>
-              e.fecha.getFullYear() === año &&
-              e.fecha.getMonth()      === mes  &&
-              e.fecha.getDate()       === d
-            );
-            return (
-              <div key={d} className="agenda-celda">
-                <div
-                  className={`agenda-numero ${esHoy(d) ? 'hoy' : ''}`}
-                  onClick={() => abrirModal(d)}
-                >
-                  {d}
+        {vista === "mes" && (
+          <div className="agenda-grid">
+            {DIAS_SEMANA.map(d => (
+              <div key={d} className="agenda-dia-nombre">{d}</div>
+            ))}
+            {blancos.map((_, i) => (
+              <div key={`b${i}`} className="agenda-celda vacia" />
+            ))}
+            {diasMes.map(d => {
+              const evs = eventos.filter(e =>
+                e.fecha.getFullYear() === año &&
+                e.fecha.getMonth() === mes &&
+                e.fecha.getDate() === d
+              );
+              return (
+                <div key={d} className="agenda-celda">
+                  <div className={`agenda-numero ${esHoy(d) ? 'hoy' : ''}`} onClick={() => abrirModal(d)}>{d}</div>
+                  <div className="agenda-eventos">
+                    {evs.map((e, i) => {
+                      const hh = e.fecha.getHours().toString().padStart(2, '0');
+                      const mm = e.fecha.getMinutes().toString().padStart(2, '0');
+                      const label = `${hh}:${mm} - ${e.titulo}`;
+                      return (
+                        <div key={i} className="evt-wrapper">
+                          <div className={`evt evt-${e.tema}`}>{label}</div>
+                          <div className="evt-tooltip">{label}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              <div className="agenda-eventos">
-  {evs.map((e, i) => {
-    const hh = e.fecha.getHours().toString().padStart(2, '0');
-    const mm = e.fecha.getMinutes().toString().padStart(2, '0');
-    const label = `${hh}:${mm} - ${e.titulo}`;
-    return (
-      <div key={i} className="evt-wrapper">
-        <div className={`evt evt-${e.tema}`}>
-          {label}
-        </div>
-        <div className="evt-tooltip">
-          {label}
-        </div>
-      </div>
-    );
-  })}
-</div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
+
+        {vista === "semana" && <WeekView eventos={eventos} fechaBase={fechaBase} />}
+        {vista === "dia" && <DayView eventos={eventos} fecha={fechaBase} />}
       </div>
 
       {modalAbierto && (
@@ -193,10 +198,7 @@ export default function Agenda() {
           <div className="agenda-modal">
             <h2>Agregar evento</h2>
             <label>Título</label>
-            <input
-              value={evtTitulo}
-              onChange={e => setEvtTitulo(e.target.value)}
-            />
+            <input value={evtTitulo} onChange={e => setEvtTitulo(e.target.value)} />
             <label>Fecha</label>
             <input value={evtFecha} readOnly />
             <div className="agenda-modal-actions">

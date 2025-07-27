@@ -67,6 +67,22 @@
   margin-left: 0.5rem;
   color: #6b7280;
 }
+/* Estilo moderno para el selector de vista */
+.agenda-select {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 0.9rem;
+  color: #374151;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.agenda-select:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+}
 
 /* Flechas de navegación */
 .arrow-btn {
@@ -262,4 +278,13 @@
 .agenda-modal-actions button:last-child {
   background: #dc2626;
   color: #fff;
+}
+
+.linea-roja {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0.7px;
+  background-color: red;
+  z-index: 3;
 }

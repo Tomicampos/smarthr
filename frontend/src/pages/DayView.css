@@ -1,0 +1,70 @@
+/* src/pages/DayView.css */
+.day-view-container {
+  flex: 1;
+  background: #fff;
+  padding: 1rem;
+  border-radius: 1rem;
+  overflow-y: auto;
+  color: #111827;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.day-label {
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+.day-hours {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.day-hour {
+  display: flex;
+  align-items: flex-start;
+  border-top: 1px solid #e5e7eb;
+  padding: 0.5rem;
+  position: relative;
+  height: 60px;
+}
+
+.day-hour-label {
+  min-width: 60px;
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.day-event {
+  background: #3b82f6;
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  position: absolute;
+  left: 70px;
+  right: 10px;
+  top: 0.5rem;
+  max-width: calc(100% - 80px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.day-current-line {
+  position: absolute;
+  left: 60px;
+  right: 0;
+  height: 1px;
+  background: red;
+  z-index: 5;
+}
