@@ -1,0 +1,39 @@
+/* src/components/EventoModal.css */
+.evento-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(30, 30, 30, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.evento-modal {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 400px;
+  width: 90%;
+}
+
+.evento-modal h2 {
+  margin-bottom: 1rem;
+}
+
+.evento-modal input,
+.evento-modal textarea {
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.evento-modal-actions {
+  display: flex;
+  justify-content: space-between;
+}

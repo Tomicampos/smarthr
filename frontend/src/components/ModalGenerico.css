@@ -245,3 +245,7 @@ input[type=number]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+.modal-overlay {
+  z-index: 10000; /* mayor que el datepicker */
+}

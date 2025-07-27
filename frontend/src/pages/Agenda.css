@@ -299,3 +299,37 @@
   margin-left: 1rem;
   font-weight: bold;
 }
+.MuiPickersPopper-root {
+  z-index: 3000 !important;
+}
+
+.modal {
+  overflow: visible !important;
+}
+
+.MuiPickersLayout-actionBar button {
+  color: #dc2626 !important;       /* texto en rojo */
+}
+
+/* Forzamos el borde rojo del campo DateTimePicker */
+.MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline {
+  border-color: #dc2626 !important;
+}
+
+/* Hover también en rojo */
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #b91c1c !important;
+}
+
+/* Borde en rojo cuando está enfocado */
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #dc2626 !important;
+}
+
+/* Título (label) siempre en negro */
+.MuiInputLabel-root {
+  color: black !important;
+}
+.MuiInputLabel-root.Mui-focused {
+  color: black !important;
+}

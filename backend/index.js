@@ -1554,24 +1554,31 @@ app.get('/api/eventos', authMiddleware, async (req, res) => {
 app.post('/api/eventos', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { titulo, descripcion, fecha_inicio, fecha_fin } = req.body;
+    const { titulo, descripcion, fecha_inicio, fecha_fin, correos } = req.body;
 
-    // 1) Insertar en tu BD:
+    // Función para convertir a formato MySQL
+    function toMySQLDatetime(isoString) {
+      const date = new Date(isoString);
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
+
+    const fechaInicioSQL = toMySQLDatetime(fecha_inicio);
+    const fechaFinSQL    = toMySQLDatetime(fecha_fin || fecha_inicio);
+
+    // 1) Insertar en tu BD
     const [result] = await pool.query(
       `INSERT INTO eventos 
          (titulo, descripcion, fecha_inicio, fecha_fin, tipo, creado_por)
-       VALUES (?,       ?,           ?,            ?,       'propio', ?)`,
-      [titulo, descripcion || null, fecha_inicio, fecha_fin || null, userId]
+       VALUES (?, ?, ?, ?, 'propio', ?)`,
+      [titulo, descripcion || null, fechaInicioSQL, fechaFinSQL, userId]
     );
     const nuevoId = result.insertId;
 
     // 2) Replicar en Google Calendar
-    //    Asegúrate de tener en tu .env:
-    //      REFRESH_TOKEN, CALENDAR_ID (o usa 'primary') y TIMEZONE
     oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
     const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
 
-    // Crear el objeto event en formato RFC3339
     const gEvent = {
       summary:     titulo,
       description: descripcion || '',
@@ -1580,26 +1587,35 @@ app.post('/api/eventos', authMiddleware, async (req, res) => {
         timeZone: process.env.TIMEZONE || 'America/Argentina/Buenos_Aires'
       },
       end: {
-        dateTime: new Date(fecha_fin   || fecha_inicio).toISOString(),
+        dateTime: new Date(fecha_fin || fecha_inicio).toISOString(),
         timeZone: process.env.TIMEZONE || 'America/Argentina/Buenos_Aires'
+      },
+      attendees: Array.isArray(correos) && correos.length > 0
+        ? correos.map(email => ({ email }))
+        : [],
+      conferenceData: {
+        createRequest: {
+          requestId: 'evento-' + Date.now()
+        }
       }
     };
 
-    // Insertar en Google Calendar
     const gResp = await calendar.events.insert({
       calendarId: process.env.CALENDAR_ID || 'primary',
-      resource:   gEvent
+      resource:   gEvent,
+      sendUpdates: 'all',
+      conferenceDataVersion: 1 // 👈 Obligatorio para Google Meet
     });
 
-    // 3) Responder al cliente con ambos IDs
+    // 3) Responder al cliente
     res.status(201).json({
-      id:       nuevoId,
-      googleId: gResp.data.id
+      id: nuevoId,
+      googleId: gResp.data.id,
+      hangoutLink: gResp.data.hangoutLink // 👈 Lo podés usar en el frontend si querés
     });
 
   } catch (err) {
     console.error('Error creando evento + Google:', err);
-    // Si quiere, detecta si err.response.data.error para detalles de Google
     res.status(500).json({
       error: 'No se pudo crear el evento',
       details: err.response?.data?.error || err.message
@@ -1607,53 +1623,7 @@ app.post('/api/eventos', authMiddleware, async (req, res) => {
   }
 });
 
-// ─── ACTUALIZAR un evento propio + Google Calendar ───────────────────
-app.put('/api/eventos/:id', authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const evId    = Number(req.params.id);
-    const { titulo, descripcion, fecha_inicio, fecha_fin } = req.body;
 
-    // 1) Recupero el gcal_id de la BD
-    const [[row]] = await pool.query(
-      `SELECT gcal_id FROM eventos WHERE id = ? AND creado_por = ?`,
-      [evId, userId]
-    );
-    if (!row) return res.status(404).json({ error: 'Evento no encontrado' });
-
-    // 2) Actualizo mi BD
-    const [upd] = await pool.query(
-      `UPDATE eventos
-         SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?
-       WHERE id = ? AND creado_por = ?`,
-      [titulo, descripcion||null, fecha_inicio, fecha_fin||null, evId, userId]
-    );
-    if (upd.affectedRows === 0) {
-      return res.status(404).json({ error: 'Evento no encontrado' });
-    }
-
-    // 3) Si había un gcal_id, actualizo en Google
-    if (row.gcal_id) {
-      oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
-      const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
-      await calendar.events.update({
-        calendarId:   process.env.CALENDAR_ID || 'primary',
-        eventId:      row.gcal_id,
-        requestBody: {
-          summary:     titulo,
-          description: descripcion || '',
-          start:       { dateTime: fecha_inicio },
-          end:         { dateTime: fecha_fin   }
-        }
-      });
-    }
-
-    res.json({ ok: true });
-  } catch (err) {
-    console.error('Error actualizando evento + Google:', err);
-    res.status(500).json({ error: 'No se pudo actualizar el evento' });
-  }
-});
 
 // ─── BORRAR un evento propio + Google Calendar ───────────────────────
 app.delete('/api/eventos/:id', authMiddleware, async (req, res) => {
