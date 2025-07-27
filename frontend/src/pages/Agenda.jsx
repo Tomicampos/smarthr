@@ -1,4 +1,3 @@
-// src/pages/Agenda.jsx
 import React, { useState, useEffect } from 'react';
 import API from '../api';
 import './Agenda.css';
@@ -6,10 +5,7 @@ import DayView from './DayView';
 import WeekView from './WeekView';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
-const MESES = [
-  'Enero','Febrero','Marzo','Abril','Mayo','Junio',
-  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
-];
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DIAS_SEMANA = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
 export default function Agenda() {
@@ -23,7 +19,9 @@ export default function Agenda() {
   const [eventos, setEventos]     = useState([]);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [evtTitulo, setEvtTitulo] = useState('');
-  const [evtFecha, setEvtFecha]   = useState('');
+  const [evtDesc, setEvtDesc]     = useState('');
+  const [evtInicio, setEvtInicio] = useState('');
+  const [evtFin, setEvtFin]       = useState('');
 
   useEffect(() => {
     const último = new Date(año, mes + 1, 0).getDate();
@@ -45,8 +43,7 @@ export default function Agenda() {
                 desc: e.description || '',
                 tema: 'azul'
               };
-            })
-          : [];
+            }) : [];
 
         const respF = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${año}/AR`);
         const feriadosJson = await respF.json();
@@ -56,8 +53,7 @@ export default function Agenda() {
               titulo: f.localName,
               desc: f.name,
               tema: 'rojo'
-            }))
-          : [];
+            })) : [];
 
         setEventos([...evAgenda, ...evFeriados]);
       } catch (err) {
@@ -67,33 +63,42 @@ export default function Agenda() {
     fetchAll();
   }, [año]);
 
-  function esHoy(d) {
-    const dd = new Date(año, mes, d);
-    return dd.toDateString() === new Date().toDateString();
-  }
+  const esHoy = (d) => new Date(año, mes, d).toDateString() === new Date().toDateString();
 
-  function abrirModal(d) {
-    setEvtFecha(new Date(año, mes, d).toDateString());
-    setModalAbierto(true);
-  }
-
-  function guardarEvento() {
-    if (!evtTitulo) return;
-    setEventos([
-      ...eventos,
-      { fecha: new Date(evtFecha), titulo: evtTitulo, desc: '', tema: 'verde' }
-    ]);
+  const abrirModal = () => {
     setEvtTitulo('');
-    setModalAbierto(false);
-  }
+    setEvtDesc('');
+    setEvtInicio('');
+    setEvtFin('');
+    setModalAbierto(true);
+  };
+
+  const guardarEvento = async () => {
+    try {
+      const payload = {
+        titulo: evtTitulo,
+        descripcion: evtDesc,
+        fecha_inicio: evtInicio,
+        fecha_fin: evtFin
+      };
+      const { data } = await API.post('/eventos', payload);
+      setEventos([...eventos, {
+        fecha: new Date(evtInicio),
+        titulo: evtTitulo,
+        desc: evtDesc,
+        tema: 'verde'
+      }]);
+      setModalAbierto(false);
+    } catch (error) {
+      console.error("Error al crear evento:", error);
+    }
+  };
 
   const prev = () => {
     const nueva = new Date(fechaBase);
-    if (vista === "semana") {
-      nueva.setDate(nueva.getDate() - 7);
-    } else if (vista === "dia") {
-      nueva.setDate(nueva.getDate() - 1);
-    } else {
+    if (vista === "semana") nueva.setDate(nueva.getDate() - 7);
+    else if (vista === "dia") nueva.setDate(nueva.getDate() - 1);
+    else {
       if (mes > 0) setMes(m => m - 1);
       else {
         setMes(11);
@@ -108,11 +113,9 @@ export default function Agenda() {
 
   const next = () => {
     const nueva = new Date(fechaBase);
-    if (vista === "semana") {
-      nueva.setDate(nueva.getDate() + 7);
-    } else if (vista === "dia") {
-      nueva.setDate(nueva.getDate() + 1);
-    } else {
+    if (vista === "semana") nueva.setDate(nueva.getDate() + 7);
+    else if (vista === "dia") nueva.setDate(nueva.getDate() + 1);
+    else {
       if (mes < 11) setMes(m => m + 1);
       else {
         setMes(0);
@@ -150,17 +153,14 @@ export default function Agenda() {
             <button className="arrow-btn" onClick={prev}><FiChevronLeft /></button>
             <button className="emp-btn" onClick={volverHoy}>Hoy</button>
             <button className="arrow-btn" onClick={next}><FiChevronRight /></button>
+            <button className="add-btn" onClick={abrirModal}>+ Evento</button>
           </div>
         </header>
 
         {vista === "mes" && (
           <div className="agenda-grid">
-            {DIAS_SEMANA.map(d => (
-              <div key={d} className="agenda-dia-nombre">{d}</div>
-            ))}
-            {blancos.map((_, i) => (
-              <div key={`b${i}`} className="agenda-celda vacia" />
-            ))}
+            {DIAS_SEMANA.map(d => <div key={d} className="agenda-dia-nombre">{d}</div>)}
+            {blancos.map((_, i) => <div key={`b${i}`} className="agenda-celda vacia" />)}
             {diasMes.map(d => {
               const evs = eventos.filter(e =>
                 e.fecha.getFullYear() === año &&
@@ -169,7 +169,7 @@ export default function Agenda() {
               );
               return (
                 <div key={d} className="agenda-celda">
-                  <div className={`agenda-numero ${esHoy(d) ? 'hoy' : ''}`} onClick={() => abrirModal(d)}>{d}</div>
+                  <div className={`agenda-numero ${esHoy(d) ? 'hoy' : ''}`}>{d}</div>
                   <div className="agenda-eventos">
                     {evs.map((e, i) => {
                       const hh = e.fecha.getHours().toString().padStart(2, '0');
@@ -196,11 +196,15 @@ export default function Agenda() {
       {modalAbierto && (
         <div className="agenda-modal-backdrop">
           <div className="agenda-modal">
-            <h2>Agregar evento</h2>
+            <h2>Nuevo evento</h2>
             <label>Título</label>
             <input value={evtTitulo} onChange={e => setEvtTitulo(e.target.value)} />
-            <label>Fecha</label>
-            <input value={evtFecha} readOnly />
+            <label>Descripción</label>
+            <textarea value={evtDesc} onChange={e => setEvtDesc(e.target.value)} />
+            <label>Inicio</label>
+            <input type="datetime-local" value={evtInicio} onChange={e => setEvtInicio(e.target.value)} />
+            <label>Fin</label>
+            <input type="datetime-local" value={evtFin} onChange={e => setEvtFin(e.target.value)} />
             <div className="agenda-modal-actions">
               <button onClick={() => setModalAbierto(false)}>Cancelar</button>
               <button onClick={guardarEvento}>Guardar</button>
