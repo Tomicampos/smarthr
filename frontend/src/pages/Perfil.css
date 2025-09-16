@@ -51,6 +51,14 @@
   cursor: pointer;
   transition: background 0.2s;
 }
+
+.perfil-avatar-wrapper {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .perfil-btn-file:hover {
   background: #f3f4f6;
 }
@@ -85,6 +93,8 @@
   outline: none;
   border-color: #dc2626;
 }
+
+
 
 /* Botón guardar */
 .perfil-actions {

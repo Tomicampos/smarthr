@@ -31,16 +31,13 @@ export default function App() {
       <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
 
       {/* Protegidas */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <ToastProvider>
-              <MainLayout />
-            </ToastProvider>
-          </ProtectedRoute>
-        }
-      >
+           <Route
+       element={
+         <ProtectedRoute>
+           <MainLayout />
+         </ProtectedRoute>
+       }
+     >
         <Route path="home" element={<Dashboard />} />
 
         {/* Rutas Admin */}
@@ -50,7 +47,9 @@ export default function App() {
         <Route path="notificaciones" element={<ProtectedRoute adminOnly><Notificaciones/></ProtectedRoute>} />
         <Route path="notificaciones/:id" element={<ProtectedRoute adminOnly><NotificationDetail/></ProtectedRoute>} />
         <Route path="agenda"          element={<ProtectedRoute adminOnly><Agenda/></ProtectedRoute>} />
-        <Route path="documentacion"   element={<ProtectedRoute adminOnly><Documentacion/></ProtectedRoute>} />
+        <Route path="documentacion"   element={<ProtectedRoute adminOnly><Documentacion/>
+        <Route path="perfil"          element={<Perfil />} />
+        </ProtectedRoute>} />
 
         {/* Rutas Empleado */}
         <Route path="mis-notificaciones" element={<MisNotificaciones />} />

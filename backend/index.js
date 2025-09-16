@@ -408,8 +408,8 @@ app.post('/api/users', async (req, res) => {
     // Insertar incluyendo el id (DNI)
     await pool.query(
       `INSERT INTO users (id, nombre, email, password, rol, linkedin)
-       VALUES (?,  ?,      ?,     ?,        ?)`,
-      [Number(id), nombre, email, hash, rol, linkedin]
+       VALUES (?,  ?,      ?,     ?,        ?, NULL)`,
+      [Number(id), nombre, email, hash, rol]
     );
 
     res.status(201).json({ id, nombre, email, rol });
@@ -613,19 +613,22 @@ app.post('/api/docs/upload', uploadDocs.single('file'), async (req, res) => {
       const mes   = Number(dtM[1]);
       const anio  = Number(dtM[2]);
 
+      // Traer datos del usuario (ajustá WHERE si tu columna es dni en vez de id)
       const [[usuario]] = await pool.query(
-        'SELECT id FROM users WHERE id = ?',
+        'SELECT id, nombre, email FROM users WHERE id = ?',
         [dni]
       );
       if (!usuario) continue;
 
+      // Generar un PDF por página
       const nuevoPdf      = await PDFDocument.create();
       const [copiaPagina] = await nuevoPdf.copyPages(pdf, [i]);
       nuevoPdf.addPage(copiaPagina);
       const byteArray     = await nuevoPdf.save();
       const pdfBuffer     = Buffer.from(byteArray);
 
-      await pool.query(
+      // Guardar recibo en la base
+      const [{ insertId: reciboId }] = await pool.query(
         `INSERT INTO recibos_sueldo 
            (subido_por, empleado_id, anio_periodo, mes_periodo, nombre_archivo, datos_pdf, datos_pdf_original)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -639,6 +642,37 @@ app.post('/api/docs/upload', uploadDocs.single('file'), async (req, res) => {
           originalBuffer
         ]
       );
+
+      // Crear notificación interna
+      const asunto = 'Nuevo recibo de sueldo disponible';
+      const cuerpo = `Se cargó un nuevo recibo de sueldo para el período ${mes}/${anio}.`;
+
+      const [{ insertId: notiId }] = await pool.query(
+        `INSERT INTO notificaciones (asunto, cuerpo, creado_por)
+         VALUES (?, ?, ?)`,
+        [asunto, cuerpo, req.user.id]
+      );
+
+      await pool.query(
+        `INSERT INTO notificaciones_destinatarios (notificacion_id, empleado_id)
+         VALUES (?, ?)`,
+        [notiId, usuario.id]
+      );
+
+      // Enviar email (opcional)
+      try {
+        if (usuario.email && usuario.email.includes('@')) {
+          await enviarNotificacion({
+            to: usuario.email,
+            asunto,
+            nombre: usuario.nombre || '',
+            cuerpoHtml: `<p>Hola ${usuario.nombre || ''},</p>
+                         <p>Se cargó un nuevo recibo de sueldo para ${mes}/${anio}. Ingresá a tu perfil para descargarlo.</p>`
+          });
+        }
+      } catch (errMail) {
+        console.error('Error enviando email de notificación:', errMail);
+      }
     }
 
     fs.unlinkSync(req.file.path);
@@ -649,6 +683,7 @@ app.post('/api/docs/upload', uploadDocs.single('file'), async (req, res) => {
     res.status(500).json({ error: 'Error interno al procesar el PDF' });
   }
 });
+
 
 // Listar recibos masivos
 app.get('/api/docs', async (req, res) => {
@@ -1362,46 +1397,6 @@ app.get('/api/postulantes', async (req, res) => {
   }
 });
 
-// GET /api/metrics/postulantes
-app.get('/api/metrics/postulantes', async (req, res) => {
-  try {
-    const TOTAL_ETAPAS = 6
-    const [[{ total }]] = await pool.query(
-      `SELECT COUNT(*) AS total FROM postulantes`
-    );
-
-    const [[{ en_proceso }]] = await pool.query(
-      `SELECT COUNT(*) AS en_proceso
-       FROM postulantes
-       WHERE etapa_actual >= 1
-         AND etapa_actual < ?`,
-      [TOTAL_ETAPAS]
-    );
-
-    const [[{ finalizados }]] = await pool.query(
-      `SELECT COUNT(*) AS finalizados
-       FROM postulantes
-       WHERE etapa_actual = ?`,
-      [TOTAL_ETAPAS]
-    );
-
-    // Promedio de días entre creación y fecha_final
-    const [[{ promedio_dias }]] = await pool.query(
-      `SELECT AVG(DATEDIFF(fecha_final, fecha_creacion)) AS promedio_dias
-       FROM postulantes
-       WHERE fecha_final IS NOT NULL`
-    );
-
-    const tasa = total > 0
-      ? +((finalizados / total) * 100).toFixed(1)
-      : 0;
-
-    res.json({ total, en_proceso, finalizados, promedio_dias, tasa });
-  } catch (err) {
-    console.error('Error calculando métricas de postulantes:', err);
-    res.status(500).json({ error: 'Error interno' });
-  }
-});
 
 
 

@@ -1,20 +1,27 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { useToast } from '../components/ToastContext';
 import '../styles/PageForm.css';
-import './OlvideContrasena.css'; // si necesitas ajustes extra
+import './OlvideContrasena.css';
 
 export default function OlvideContrasena() {
   const [email, setEmail] = useState('');
-  const [estado, setEstado] = useState(null);
+  const [sending, setSending] = useState(false);
+  const toast = useToast();
+  const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (sending) return;
+    setSending(true);
     try {
-      await axios.post('http://localhost:3001/auth/forgot-password', { email });
-      setEstado('¡Listo! Si ese email existe, recibirás un enlace en tu bandeja.');
+      await axios.post(`${BASE}/auth/forgot-password`, { email }, { validateStatus: () => true });
+      toast.success('Si ese email existe, recibirás un enlace en tu bandeja.');
     } catch {
-      setEstado('Ocurrió un error. Intenta de nuevo más tarde.');
+      toast.error('No se pudo contactar al servidor.');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -29,10 +36,12 @@ export default function OlvideContrasena() {
           value={email}
           onChange={e => setEmail(e.target.value)}
           required
+          disabled={sending}
         />
-        <button type="submit">Enviar enlace</button>
+        <button type="submit" disabled={sending}>
+          {sending ? 'Enviando…' : 'Enviar enlace'}
+        </button>
       </form>
-      {estado && <p className="page-form-status">{estado}</p>}
       <p style={{ textAlign: 'center', marginTop: '1rem' }}>
         <Link to="/login" style={{ color: '#dc2626', textDecoration: 'none' }}>
           Volver al inicio

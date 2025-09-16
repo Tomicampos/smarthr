@@ -81,6 +81,7 @@ export default function Sidebar() {
           { to: '/empleados',     label: 'Usuarios',      icon: <FaUsers /> },
           { to: '/agenda',        label: 'Agenda',        icon: <FaCalendarAlt /> },
           { to: '/documentacion', label: 'Documentación', icon: <FaBook /> },
+          { to: '/perfil',         label: 'Mi Perfil',   icon: <FaUsers /> },
         ]
       : [
           { to: '/mi-agenda',      label: 'Agenda',      icon: <FaCalendarAlt /> },

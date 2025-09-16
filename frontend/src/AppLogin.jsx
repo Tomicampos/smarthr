@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { useToast } from './components/ToastContext'; // ← agregado
 import './App.css';
 
 export default function AppLogin() {
@@ -10,6 +11,7 @@ export default function AppLogin() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const toast = useToast(); // ← agregado
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -19,10 +21,9 @@ export default function AppLogin() {
       navigate('/home');
     } catch (err) {
       console.error('Error en login:', err);
-      alert('Usuario o contraseña incorrectos');
+      toast.error('Usuario o contraseña incorrectos'); // ← reemplaza alert
     }
   };
-
   return (
     <div className="login-container">
       <div className="login-card">

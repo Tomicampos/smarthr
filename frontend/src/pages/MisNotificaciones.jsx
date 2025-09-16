@@ -3,17 +3,16 @@ import React, { useEffect, useState } from 'react';
 import API from '../api';
 import { useToast } from '../components/ToastContext';
 import ModalGenerico from '../components/ModalGenerico';
-import { FiEye } from 'react-icons/fi';
+import { FiEye, FiDownload } from 'react-icons/fi';
 import '../pages/Notificaciones.css';
-
 
 export default function MisNotificaciones() {
   const toast = useToast();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
-  // detalle modal
   const [modalOpen, setModalOpen] = useState(false);
   const [detalle, setDetalle] = useState(null);
+  const [docId, setDocId] = useState(null);
 
   useEffect(() => {
     API.get('/mis-notificaciones')
@@ -22,14 +21,69 @@ export default function MisNotificaciones() {
       .finally(() => setLoading(false));
   }, [toast]);
 
-  const verDetalle = notif => {
+  const marcarAbiertaLocal = (id) => {
+    setList(prev =>
+      prev.map(n =>
+        n.id === id
+          ? { ...n, abierta: true, leido_en: n.leido_en || new Date().toISOString(), estado: 'abierta' }
+          : n
+      )
+    );
+  };
+
+  const resolveReciboDocId = async (notif) => {
+    setDocId(null);
+    if (notif.doc_id) {
+      setDocId(Number(notif.doc_id));
+      return;
+    }
+    const m = (notif.cuerpo || '').match(/(\d{1,2})\/(\d{4})/);
+    if (!m) return;
+    const mes = Number(m[1]);
+    const anio = Number(m[2]);
+    try {
+      const { data } = await API.get('/docs');
+      const rec = data.find(r => Number(r.period_month) === mes && Number(r.period_year) === anio);
+      if (rec) setDocId(Number(rec.id));
+    } catch {}
+  };
+
+  const verDetalle = async (notif) => {
     setDetalle(notif);
     setModalOpen(true);
+    try { await API.post(`/mis-notificaciones/${notif.id}/abrir`); } catch {}
+    marcarAbiertaLocal(notif.id);
+    if ((notif.asunto || '').toLowerCase().includes('recibo')) {
+      resolveReciboDocId(notif);
+    } else {
+      setDocId(null);
+    }
+  };
+
+  const descargarRecibo = async (id) => {
+    try {
+      const res = await API.get(`/docs/${id}/download`, { responseType: 'blob' });
+      const cd = res.headers['content-disposition'] || '';
+      const fn = (cd.match(/filename="?(.+)"?/) || [])[1] || `recibo_${id}.pdf`;
+      const url = URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url; a.download = fn; document.body.appendChild(a);
+      a.click(); a.remove(); URL.revokeObjectURL(url);
+    } catch {
+      toast.error('No se pudo descargar el recibo.');
+    }
+  };
+
+  const estadoUI = (n) => {
+    if (n.leido_en || n.abierta || n.vista_en) return 'Abierta';
+    if (n.estado && n.estado.toLowerCase() !== 'pendiente') return 'Abierta';
+    return 'Sin abrir';
   };
 
   return (
     <div className="notif-card">
-      <h3>Mis Notificaciones</h3>
+      <h2 className="card-title">Mis Notificaciones</h2>
+
       {loading ? (
         <p>Cargando…</p>
       ) : (
@@ -50,7 +104,7 @@ export default function MisNotificaciones() {
               {list.map(n => (
                 <tr key={n.id}>
                   <td>{n.asunto}</td>
-                  <td>{n.estado}</td>
+                  <td>{estadoUI(n)}</td>
                   <td>
                     {new Date(n.creado_en).toLocaleDateString('es-AR', {
                       day:'2-digit',month:'2-digit',year:'numeric'
@@ -60,24 +114,21 @@ export default function MisNotificaciones() {
                     })}
                   </td>
                   <td>
-                    <button
-                      className="btn-icon"
-                      title="Ver detalle"
-                      onClick={() => verDetalle(n)}
-                    >
-                      <FiEye />
-                    </button>
-                  </td>
+                   <button
+                     title="Ver detalle"
+                     onClick={() => verDetalle(n)}
+                     style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                   >
+                     <FiEye />
+                   </button>
+                 </td>
                 </tr>
               ))}
             </tbody>
           </table>
-
-          {/* Paginación si quieres, idéntica a la de reclutamiento */}
         </>
       )}
 
-      {/* Modal detalle */}
       <ModalGenerico
         abierto={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -86,9 +137,7 @@ export default function MisNotificaciones() {
         {detalle && (
           <div className="modal-body">
             <p><b>Asunto:</b> {detalle.asunto}</p>
-            <p><b>Mensaje:</b></p>
-            <div className="notif-body">{detalle.cuerpo}</div>
-            <p><b>Estado:</b> {detalle.estado}</p>
+            <p><b>Mensaje:</b> {detalle.cuerpo}</p>
             <p>
               <b>Fecha:</b>{' '}
               {new Date(detalle.creado_en).toLocaleString('es-AR', {
@@ -96,6 +145,19 @@ export default function MisNotificaciones() {
                 hour:'2-digit',minute:'2-digit'
               })}
             </p>
+
+            {docId && (
+              <div style={{ marginTop: 12, textAlign: 'right' }}>
+                <button
+                  className="btn-red"
+                  onClick={() => descargarRecibo(docId)}
+                  title="Descargar recibo"
+                >
+                  <FiDownload style={{ marginRight: 6 }} />
+                  Descargar recibo
+                </button>
+              </div>
+            )}
           </div>
         )}
       </ModalGenerico>
