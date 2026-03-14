@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: 'credentials.json',       // Asegúrate de tener este JSON aquí
+  keyFile: 'credentials.json',      
   scopes: ['https://www.googleapis.com/auth/calendar.readonly']
 });
 const calendar = google.calendar({ version: 'v3', auth });

@@ -70,7 +70,7 @@ export default function Documentacion() {
       file_name: r.file_name,
       rawId: r.id,
     })).filter(it =>
-      it.file_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      it.file_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       it.periodo.includes(searchTerm)
     );
   } else {
@@ -81,8 +81,8 @@ export default function Documentacion() {
       email: e.email,
       rawId: e.id,
     })).filter(it =>
-      it.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      it.email.toLowerCase().includes(searchTerm.toLowerCase())
+      it.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      it.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }
 

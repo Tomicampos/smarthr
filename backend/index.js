@@ -1663,10 +1663,33 @@ app.delete('/api/eventos/:id', authMiddleware, async (req, res) => {
 
 
 // ─── LEVANTO SERVIDOR ──────────────────────────────────────────────
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Backend escuchando en http://localhost:${PORT}`);
   console.log(`→ http://localhost:3001/auth generar nuevo REFRESH_TOKEN`);
-  console.log(`→ /api/users/export  GET`);
-  console.log(`→ /api/users/import  POST`);
-  console.log(`→ /api/users         CRUD`);
+
+  // 🛡️ Inicializar o Restablecer usuario ADMIN
+  const initAdmin = async (retries = 5) => {
+    try {
+      const adminEmail = 'admin@smarthr.com';
+      const adminPass  = 'admin';
+      const hash = await bcrypt.hash(adminPass, 10);
+
+      // Intentamos actualizar la contraseña si ya existe, o crearlo si no.
+      const [exists] = await pool.query('SELECT id FROM users WHERE email = ?', [adminEmail]);
+      if (exists.length > 0) {
+        await pool.query('UPDATE users SET password = ? WHERE email = ?', [hash, adminEmail]);
+        console.log(`🔐 Contraseña de ADMIN restablecida a: '${adminPass}'`);
+      } else {
+        await pool.query('INSERT INTO users (id, nombre, email, password, rol) VALUES (?, ?, ?, ?, ?)', [1, 'Administrador', adminEmail, hash, 'admin']);
+        console.log(`👤 Usuario ADMIN creado: ${adminEmail} / ${adminPass}`);
+      }
+    } catch (err) {
+      console.error(`⚠️ Error inicializando admin (intentos restantes: ${retries}):`, err.code || err.message);
+      if (retries > 0) {
+        setTimeout(() => initAdmin(retries - 1), 5000);
+      }
+    }
+  };
+
+  initAdmin();
 });

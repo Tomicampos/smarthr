@@ -66,29 +66,32 @@ export default function Sidebar() {
   // Ítems del menú
   const menuItems = [
     { to: '/home',           label: 'Inicio',             icon: <AiFillHome /> },
-    { to: isAdmin ? '/notificaciones' : '/mis-notificaciones', label: 'Notificaciones', icon: <FaBell /> },
-    ...(isAdmin
-      ? [
-          {
-            to: null,
-            label: 'Reclutamiento',
-            icon: <AiOutlineUserAdd />,
-            children: [
-              { to: '/reclutamiento',   label: 'Reclutamiento y Selección' },
-              { to: '/postulantes',     label: 'Postulantes' }
-            ]
-          },
-          { to: '/empleados',     label: 'Usuarios',      icon: <FaUsers /> },
-          { to: '/agenda',        label: 'Agenda',        icon: <FaCalendarAlt /> },
-          { to: '/documentacion', label: 'Documentación', icon: <FaBook /> },
-          { to: '/perfil',         label: 'Mi Perfil',   icon: <FaUsers /> },
-        ]
-      : [
-          { to: '/mi-agenda',      label: 'Agenda',      icon: <FaCalendarAlt /> },
-          { to: '/mis-documentos', label: 'Documentos',  icon: <FaBook /> },
-          { to: '/perfil',         label: 'Mi Perfil',   icon: <FaUsers /> },
-        ])
+    { to: isAdmin ? '/notificaciones' : '/mis-notificaciones', label: 'Notificaciones', icon: <FaBell /> }
   ];
+
+  if (isAdmin) {
+    menuItems.push(
+      {
+        to: null,
+        label: 'Reclutamiento',
+        icon: <AiOutlineUserAdd />,
+        children: [
+          { to: '/reclutamiento', label: 'Reclutamiento y Selección' },
+          { to: '/postulantes', label: 'Postulantes' }
+        ]
+      },
+      { to: '/empleados', label: 'Usuarios', icon: <FaUsers /> },
+      { to: '/agenda', label: 'Agenda', icon: <FaCalendarAlt /> },
+      { to: '/documentacion', label: 'Documentación', icon: <FaBook /> }
+    );
+  } else {
+    menuItems.push(
+      { to: '/mi-agenda', label: 'Agenda', icon: <FaCalendarAlt /> },
+      { to: '/mis-documentos', label: 'Documentos', icon: <FaBook /> }
+    );
+  }
+
+  menuItems.push({ to: '/perfil', label: 'Mi Perfil', icon: <FaUsers /> });
 
   const supportItems = [
     {

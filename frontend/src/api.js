@@ -2,7 +2,9 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:3001/api'  // ← Todas las llamadas protegidas irán a http://localhost:3001/api/...
+  // En producción (Docker) usamos ruta relativa '/api' para que Nginx haga el proxy.
+  // En desarrollo local (Vite) seguimos usando localhost:3001.
+  baseURL: import.meta.env.PROD ? '/api' : 'http://localhost:3001/api'
 });
 
 API.interceptors.request.use(config => {
